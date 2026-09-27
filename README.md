@@ -49,10 +49,30 @@ Then open `http://localhost:8000` in your browser.
   replace them with real studio shots whenever you have them.
 - **Contact details, WhatsApp number, currency label:** all in `js/config.js`.
 - **Colors/fonts:** the whole palette lives at the top of `css/styles.css` under `:root`.
-- **The hero video:** replace `assets/video/hero.mp4` with a new export any time. Keep it
-  under ~15–20MB so it loads quickly; the three "acts" of on-screen text are timed to
-  roughly the first / middle / last third of however long the video is, so you don't need
-  to re-time anything if the new video is a similar length.
+- **The hero video:** the scroll effect no longer scrubs the raw video file — it draws frames from
+  `assets/img/story-sprite.jpg`, a single sprite sheet of 192 still frames (16 columns × 12 rows)
+  generated from your clip with `ffmpeg`. This is what makes the scrubbing perfectly instant with
+  no lag, at any scroll speed (see "Why the hero doesn't lag anymore" below). If you ever replace
+  the video, regenerate the sprite with:
+
+  ```bash
+  ffmpeg -i your-new-video.mp4 -vf "fps=24,scale=190:-1,tile=16x12" -frames:v 1 -q:v 2 assets/img/story-sprite.jpg
+  ```
+
+  This assumes a clip of a similar length (~8 seconds) and portrait orientation. For a clip of a
+  different length, adjust the `fps` value so `fps × duration ≈ 192` (e.g. a 12-second clip would
+  use `fps=16`). The original raw file is kept at `assets/video/hero.mp4` for your own reuse
+  (social posts, etc.) — the website itself no longer loads it.
+
+### Why the hero doesn't lag anymore
+Scrubbing an actual `<video>` by setting its `currentTime` is never instant — browsers can only
+jump cleanly to "keyframes" (roughly every 1-2 seconds of footage) and have to decode forward from
+there, which is the delay you'd feel when scrolling. Instead, this site pre-slices the clip into
+still frames on one sprite sheet and draws the matching frame onto a `<canvas>` as you scroll —
+a plain image draw is exactly as fast at any scroll speed, so the animation tracks your scroll
+1:1 with zero lag. This is the same technique used for scroll-driven galleries on sites like
+Apple's product pages.
+
 
 ## 3. Connect orders to a Google Sheet
 
@@ -122,10 +142,11 @@ gives you the DNS records to add at your domain registrar.
 - **Language:** Arabic is the default and is right-to-left; the pill button in the top-left
   (top-right in English) swaps the whole site to English/LTR. The choice is remembered
   per visitor (localStorage).
-- **Scroll video:** the hero video's playback position is tied to scroll position instead
-  of auto-playing — scrolling down moves it forward, scrolling up moves it back. Visitors
-  with "reduce motion" turned on in their OS get a normal looping video with static text
-  instead, automatically.
+- **Scroll video:** the hero's frame position is tied to scroll position instead of auto-playing —
+  scrolling down moves it forward, scrolling up moves it back — using a preloaded sprite sheet
+  of stills drawn on a canvas (see the note above) rather than seeking a real video file, so it
+  never lags. Visitors with "reduce motion" turned on in their OS get a single static frame with
+  all three text blocks shown at once, instead of a scroll animation.
 - **Cart:** stored in the visitor's browser (localStorage), with a live count badge in the
   bottom nav. Checkout collects name/phone/city/address/notes and posts them as one order.
 - **Bottom nav:** fixed, solid black, with Home / Products / Cart / Contact. Contact opens

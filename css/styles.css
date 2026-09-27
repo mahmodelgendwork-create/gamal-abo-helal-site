@@ -118,15 +118,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   position:relative;
   height:100%;
   width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  background:#0c0906;
 }
-.story-video-wrap video{
-  height:100%;
+.story-video-wrap canvas{
+  position:absolute;
+  inset:0;
   width:100%;
-  object-fit:cover;
-  filter:saturate(1.05) contrast(1.03);
+  height:100%;
+  display:block;
 }
 .story-scrim{
   position:absolute; inset:0;
@@ -138,13 +137,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   content:"";
   position:absolute; inset:0;
   background:linear-gradient(90deg, rgba(6,4,2,.55), transparent 40%, transparent 60%, rgba(6,4,2,.55));
-}
-@media (min-width:860px){
-  .story-video-wrap video{
-    height:112%;
-    width:auto;
-    min-width:100%;
-  }
 }
 
 .story-panels{
