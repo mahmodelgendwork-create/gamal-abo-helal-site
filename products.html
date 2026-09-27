@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المنتجات | Gamal Abo Hel'al Jewelry</title>
+<meta name="description" content="تصفّح تشكيلة جمال أبو هلال من السلاسل والأساور الذهبية.">
+<link rel="icon" href="assets/img/logo.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="products">
+
+  <div id="app-topbar"></div>
+
+  <section class="page-hero">
+    <div class="container">
+      <span class="story-eyebrow" data-i18n="products.eyebrow"></span>
+      <h1 data-i18n="products.title"></h1>
+      <p data-i18n="products.body" style="max-width:52ch;"></p>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <div class="filter-row">
+        <button class="chip is-active" data-filter="all" data-i18n="products.filters.all"></button>
+        <button class="chip" data-filter="necklace" data-i18n="products.filters.necklace"></button>
+        <button class="chip" data-filter="bracelet" data-i18n="products.filters.bracelet"></button>
+        <button class="chip" data-filter="box" data-i18n="products.filters.box"></button>
+      </div>
+      <div class="product-grid" id="product-grid"></div>
+    </div>
+  </section>
+
+  <div id="app-footer"></div>
+  <div id="app-bottom-nav"></div>
+  <div id="app-cart-drawer"></div>
+  <div id="app-contact-sheet"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>

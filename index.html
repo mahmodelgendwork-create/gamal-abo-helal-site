@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جمال أبو هلال للمجوهرات | Gamal Abo Hel'al Jewelry</title>
+<meta name="description" content="ورشة عائلية للمجوهرات الذهبية في القاهرة — قطع مصنوعة يدويًا، عيار موثّق، وتغليف فاخر جاهز للإهداء.">
+<link rel="icon" href="assets/img/logo.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="home">
+
+  <div id="app-topbar"></div>
+
+  <!-- ============================= STORY HERO ============================= -->
+  <section class="story" data-story>
+    <div class="story-stage">
+      <div class="story-video-wrap">
+        <video data-story-video src="assets/video/hero.mp4" poster="assets/img/poster.jpg" muted playsinline preload="auto"></video>
+        <div class="story-scrim"></div>
+      </div>
+
+      <div class="story-panels">
+        <div class="story-panel is-active" data-act="0" data-align="start">
+          <span class="story-eyebrow" data-i18n="story.act1.eyebrow"></span>
+          <h2 data-i18n="story.act1.title"></h2>
+          <p data-i18n="story.act1.body"></p>
+        </div>
+        <div class="story-panel" data-act="1" data-align="end">
+          <span class="story-eyebrow" data-i18n="story.act2.eyebrow"></span>
+          <h2 data-i18n="story.act2.title"></h2>
+          <p data-i18n="story.act2.body"></p>
+        </div>
+        <div class="story-panel" data-act="2" data-align="start">
+          <span class="story-eyebrow" data-i18n="story.act3.eyebrow"></span>
+          <h2 data-i18n="story.act3.title"></h2>
+          <p data-i18n="story.act3.body"></p>
+        </div>
+      </div>
+
+      <div class="story-progress"><span data-p="0"></span><span data-p="1"></span><span data-p="2"></span></div>
+      <div class="scroll-cue" data-i18n="story.cue"></div>
+    </div>
+  </section>
+
+  <!-- ============================= VALUES ============================= -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section-head">
+        <span class="story-eyebrow" data-i18n="home.valuesEyebrow"></span>
+        <h2 data-i18n="home.valuesTitle"></h2>
+      </div>
+      <div class="values-grid" id="values-grid">
+        <div class="value-card"><span class="num">01</span><h3 data-i18n="home.values.0.title"></h3><p data-i18n="home.values.0.body"></p></div>
+        <div class="value-card"><span class="num">02</span><h3 data-i18n="home.values.1.title"></h3><p data-i18n="home.values.1.body"></p></div>
+        <div class="value-card"><span class="num">03</span><h3 data-i18n="home.values.2.title"></h3><p data-i18n="home.values.2.body"></p></div>
+        <div class="value-card"><span class="num">04</span><h3 data-i18n="home.values.3.title"></h3><p data-i18n="home.values.3.body"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= FEATURED PRODUCTS ============================= -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head" style="display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+        <div>
+          <span class="story-eyebrow" data-i18n="home.productsEyebrow"></span>
+          <h2 data-i18n="home.productsTitle" style="margin-bottom:.2em;"></h2>
+          <p data-i18n="home.productsBody" style="margin:0;"></p>
+        </div>
+        <a href="products.html" class="btn btn--ghost" data-i18n="home.viewAll"></a>
+      </div>
+      <div class="product-grid" id="featured-products"></div>
+    </div>
+  </section>
+
+  <div id="app-footer"></div>
+  <div id="app-bottom-nav"></div>
+  <div id="app-cart-drawer"></div>
+  <div id="app-contact-sheet"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/story.js"></script>
+</body>
+</html>
