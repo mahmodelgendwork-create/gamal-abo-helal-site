@@ -49,29 +49,50 @@ Then open `http://localhost:8000` in your browser.
   replace them with real studio shots whenever you have them.
 - **Contact details, WhatsApp number, currency label:** all in `js/config.js`.
 - **Colors/fonts:** the whole palette lives at the top of `css/styles.css` under `:root`.
-- **The hero video:** the scroll effect no longer scrubs the raw video file — it draws frames from
-  `assets/img/story-sprite.jpg`, a single sprite sheet of 192 still frames (16 columns × 12 rows)
-  generated from your clip with `ffmpeg`. This is what makes the scrubbing perfectly instant with
-  no lag, at any scroll speed (see "Why the hero doesn't lag anymore" below). If you ever replace
-  the video, regenerate the sprite with:
+- **The hero video:** the scroll effect doesn't scrub the raw video file — it draws frames from
+  four sprite sheet images (`assets/img/story-sprite-1.jpg` through `-4.jpg`, 48 frames each,
+  192 frames total), generated from your clip with `ffmpeg` + Pillow. This is what makes the
+  scrubbing both instant (no lag) and sharp — splitting the frames across four images lets each
+  one be stored at a much higher resolution than a single sprite sheet could hold. If you ever
+  replace the video, regenerate the sheets with:
 
   ```bash
-  ffmpeg -i your-new-video.mp4 -vf "fps=24,scale=190:-1,tile=16x12" -frames:v 1 -q:v 2 assets/img/story-sprite.jpg
+  # 1. Extract 192 individual frames at 384px wide (~8s clip → 24fps)
+  ffmpeg -i your-new-video.mp4 -vf "fps=24,scale=384:-2" -frames:v 192 frame_%03d.jpg -q:v 2
+
+  # 2. Pack them into 4 sheets of 48 frames each (8 cols x 6 rows) — run in Python:
+  python3 -c "
+  from PIL import Image
+  import os
+  FRAME_W, FRAME_H, COLS, ROWS = 384, 682, 8, 6
+  files = sorted(f for f in os.listdir('.') if f.startswith('frame_'))
+  for s in range(4):
+      sheet = Image.new('RGB', (FRAME_W*COLS, FRAME_H*ROWS), (12,9,6))
+      for i in range(48):
+          idx = s*48 + i
+          if idx >= len(files): break
+          im = Image.open(files[idx])
+          sheet.paste(im, ((i % COLS)*FRAME_W, (i // COLS)*FRAME_H))
+      sheet.save(f'assets/img/story-sprite-{s+1}.jpg', quality=88)
+  "
   ```
 
-  This assumes a clip of a similar length (~8 seconds) and portrait orientation. For a clip of a
-  different length, adjust the `fps` value so `fps × duration ≈ 192` (e.g. a 12-second clip would
-  use `fps=16`). The original raw file is kept at `assets/video/hero.mp4` for your own reuse
-  (social posts, etc.) — the website itself no longer loads it.
+  This assumes a clip of a similar length (~8 seconds) and portrait orientation. For a
+  meaningfully longer or shorter clip, adjust the `fps` value in step 1 so `fps × duration ≈ 192`
+  (e.g. a 12-second clip would use `fps=16`), keeping the rest identical. The original raw file is
+  kept at `assets/video/hero.mp4` for your own reuse (social posts, etc.) — the website itself no
+  longer loads it.
 
 ### Why the hero doesn't lag anymore
 Scrubbing an actual `<video>` by setting its `currentTime` is never instant — browsers can only
 jump cleanly to "keyframes" (roughly every 1-2 seconds of footage) and have to decode forward from
 there, which is the delay you'd feel when scrolling. Instead, this site pre-slices the clip into
-still frames on one sprite sheet and draws the matching frame onto a `<canvas>` as you scroll —
-a plain image draw is exactly as fast at any scroll speed, so the animation tracks your scroll
-1:1 with zero lag. This is the same technique used for scroll-driven galleries on sites like
-Apple's product pages.
+still frames across four sprite sheets and draws the matching frame onto a `<canvas>` as you
+scroll — a plain image draw is exactly as fast at any scroll speed, so the animation tracks your
+scroll 1:1 with zero lag. Splitting the frames across four sheets (instead of one) also lets each
+frame be stored at a much higher resolution, since every sheet stays within a safe texture size
+while holding fewer, bigger frames. This is the same technique used for scroll-driven galleries
+on sites like Apple's product pages.
 
 
 ## 3. Connect orders to a Google Sheet

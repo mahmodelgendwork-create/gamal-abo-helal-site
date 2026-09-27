@@ -6,19 +6,29 @@
  * and have to decode forward from there, which is exactly the "lag" you
  * feel when scrubbing a real video file on scroll.
  *
- * Instead, the hero clip is pre-sliced into still frames laid out on one
- * sprite sheet image (assets/img/story-sprite.jpg — 192 frames, 16 columns
- * x 12 rows, generated with ffmpeg). Scrolling just picks a frame index and
- * draws that cell onto a canvas — a plain image draw, so it's exactly as
- * fast at any scroll speed, with zero decode/seek latency.
+ * Instead, the hero clip is pre-sliced into still frames laid out across four
+ * sprite sheet images (assets/img/story-sprite-1..4.jpg — 192 frames total,
+ * 48 per sheet in an 8x6 grid, generated with ffmpeg + Pillow). Scrolling
+ * just picks a frame index and draws that cell onto a canvas — a plain
+ * image draw, so it's exactly as fast at any scroll speed, with zero
+ * decode/seek latency.
  */
 (function () {
-  const SPRITE_URL = "assets/img/story-sprite.jpg";
-  const COLS = 16;
-  const ROWS = 12;
-  const TOTAL_FRAMES = COLS * ROWS; // 192
-  const FRAME_W = 190;
-  const FRAME_H = 338;
+  // 192 frames total, split across 4 sprite sheets (48 frames each, 8x6 grid)
+  // so every sheet stays comfortably under GPU texture size limits while
+  // each frame is rendered at 2x the resolution of a single giant sheet.
+  const SHEET_URLS = [
+    "assets/img/story-sprite-1.jpg",
+    "assets/img/story-sprite-2.jpg",
+    "assets/img/story-sprite-3.jpg",
+    "assets/img/story-sprite-4.jpg"
+  ];
+  const COLS = 8;
+  const ROWS = 6;
+  const FRAMES_PER_SHEET = COLS * ROWS; // 48
+  const TOTAL_FRAMES = FRAMES_PER_SHEET * SHEET_URLS.length; // 192
+  const FRAME_W = 384;
+  const FRAME_H = 682;
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -32,12 +42,26 @@
     const panels = Array.from(story.querySelectorAll(".story-panel"));
     const progressEls = Array.from(story.querySelectorAll(".story-progress span"));
 
+    let loadedCount = 0;
     let ready = false;
     let currentFrame = -1;
-    let pendingProgress = 0;
+    let pendingFrame = 0;
 
-    const sprite = new Image();
-    sprite.src = SPRITE_URL;
+    const sheets = SHEET_URLS.map((url) => {
+      const img = new Image();
+      img.onload = onSheetLoaded;
+      img.src = url;
+      return img;
+    });
+
+    function onSheetLoaded() {
+      loadedCount++;
+      if (loadedCount === sheets.length) {
+        ready = true;
+        resizeCanvas();
+        drawFrame(pendingFrame, true);
+      }
+    }
 
     function resizeCanvas() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -50,14 +74,16 @@
 
     function drawFrame(frameIndex, force) {
       if (!ready) {
-        pendingProgress = frameIndex;
+        pendingFrame = frameIndex;
         return;
       }
       if (frameIndex === currentFrame && !force) return;
       currentFrame = frameIndex;
 
-      const col = frameIndex % COLS;
-      const row = Math.floor(frameIndex / COLS);
+      const sheetIndex = Math.min(sheets.length - 1, Math.floor(frameIndex / FRAMES_PER_SHEET));
+      const localIndex = frameIndex - sheetIndex * FRAMES_PER_SHEET;
+      const col = localIndex % COLS;
+      const row = Math.floor(localIndex / COLS);
       const sx = col * FRAME_W;
       const sy = row * FRAME_H;
 
@@ -72,7 +98,7 @@
       const dy = (ch - drawH) / 2;
 
       ctx.clearRect(0, 0, cw, ch);
-      ctx.drawImage(sprite, sx, sy, FRAME_W, FRAME_H, dx, dy, drawW, drawH);
+      ctx.drawImage(sheets[sheetIndex], sx, sy, FRAME_W, FRAME_H, dx, dy, drawW, drawH);
     }
 
     function setActiveAct(progress) {
@@ -87,21 +113,12 @@
       });
     }
 
-    sprite.onload = () => {
-      ready = true;
-      resizeCanvas();
-      drawFrame(Math.round(pendingProgress * (TOTAL_FRAMES - 1)) || 0, true);
-    };
-
     if (reduceMotion) {
       resizeCanvas();
-      sprite.onload = () => {
-        ready = true;
-        resizeCanvas();
-        drawFrame(Math.round((TOTAL_FRAMES - 1) * 0.5), true);
-      };
       panels.forEach((p) => p.classList.add("is-active"));
       window.addEventListener("resize", resizeCanvas);
+      // Show a representative mid-clip frame once the sheets finish loading.
+      pendingFrame = Math.round((TOTAL_FRAMES - 1) * 0.5);
       return;
     }
 
