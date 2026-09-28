@@ -5,18 +5,18 @@
 @import url('https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap');
 
 :root{
-  --ink:        #140b11;   /* deep plum-black */
-  --panel:      #1d1018;   /* section background */
-  --panel-2:    #26141f;   /* alternate section background */
-  --card:       #2e1a27;   /* card surface */
-  --line:       rgba(228,187,181,.24);
-  --line-soft:  rgba(247,237,233,.10);
-  --plum:       #592941;   /* brand plum (logo background) */
-  --accent:     #e4bbb5;   /* brand blush (logo text) */
-  --accent-2:   #edcbc5;
-  --accent-hi:  #f5dad5;
-  --cream:      #f8eee9;
-  --cream-dim:  rgba(248,238,233,.68);
+  --ink:        #1c030a;   /* deep maroon-black */
+  --panel:      #29040e;   /* section background */
+  --panel-2:    #350512;   /* alternate section background */
+  --card:       #420616;   /* card surface */
+  --line:       rgba(221,165,75,.24);
+  --line-soft:  rgba(244,241,235,.10);
+  --plum:       #770b28;   /* brand maroon (logo background) */
+  --accent:     #dda54b;   /* brand gold (logo text) */
+  --accent-2:   #e5ba76;
+  --accent-hi:  #efd4a9;
+  --cream:      #f4f1eb;
+  --cream-dim:  rgba(244,241,235,.68);
   --black-nav:  #000000;
 
   --font-display: 'El Messiri', 'Times New Roman', serif;
@@ -119,7 +119,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   position:relative;
   height:100%;
   width:100%;
-  background:#140b11;
+  background:#1c030a;
 }
 .story-video-wrap canvas{
   position:absolute;
@@ -359,7 +359,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   position:fixed; inset-inline:0; bottom:0; z-index:60;
   height:var(--nav-h);
   background:#000000;
-  border-top:1px solid rgba(228,187,181,.28);
+  border-top:1px solid rgba(221,165,75,.28);
   display:flex;
   align-items:stretch;
 }
