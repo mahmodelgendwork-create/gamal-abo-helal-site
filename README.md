@@ -50,38 +50,33 @@ Then open `http://localhost:8000` in your browser.
 - **Contact details, WhatsApp number, currency label:** all in `js/config.js`.
 - **Colors/fonts:** the whole palette lives at the top of `css/styles.css` under `:root`.
 - **The hero video:** the scroll effect doesn't scrub the raw video file — it draws frames from
-  four sprite sheet images (`assets/img/story-sprite-1.jpg` through `-4.jpg`, 48 frames each,
-  192 frames total), generated from your clip with `ffmpeg` + Pillow. This is what makes the
-  scrubbing both instant (no lag) and sharp — splitting the frames across four images lets each
-  one be stored at a much higher resolution than a single sprite sheet could hold. If you ever
-  replace the video, regenerate the sheets with:
+  four WebP sprite sheets (`assets/img/story-sprite-1.webp` … `-4.webp`, 24 frames each,
+  96 frames total at 540×960), generated from your clip with `ffmpeg` + Pillow. On phones the frame
+  fills the screen; on wide screens it's shown at its natural portrait size (so it stays sharp)
+  over a blurred copy of the same frame. Small strips at the top/bottom of each frame are cropped
+  out in `js/story.js` to hide the generator's watermark. If you ever replace the video, regenerate:
 
   ```bash
-  # 1. Extract 192 individual frames at 384px wide (~8s clip → 24fps)
-  ffmpeg -i your-new-video.mp4 -vf "fps=24,scale=384:-2" -frames:v 192 frame_%03d.jpg -q:v 2
+  # 1. Extract 96 frames at 540x960 (works for an ~8s 9:16 clip; for other lengths change fps so fps x seconds = 96)
+  mkdir frames && ffmpeg -i your-new-video.mp4 -vf "fps=12,scale=540:960:flags=lanczos" -frames:v 96 frames/f_%03d.png
 
-  # 2. Pack them into 4 sheets of 48 frames each (8 cols x 6 rows) — run in Python:
+  # 2. Pack into 4 sheets of 24 frames (6 cols x 4 rows)
   python3 -c "
   from PIL import Image
   import os
-  FRAME_W, FRAME_H, COLS, ROWS = 384, 682, 8, 6
-  files = sorted(f for f in os.listdir('.') if f.startswith('frame_'))
+  W,H,COLS,ROWS = 540,960,6,4
+  files = sorted(os.listdir('frames'))
   for s in range(4):
-      sheet = Image.new('RGB', (FRAME_W*COLS, FRAME_H*ROWS), (12,9,6))
-      for i in range(48):
-          idx = s*48 + i
-          if idx >= len(files): break
-          im = Image.open(files[idx])
-          sheet.paste(im, ((i % COLS)*FRAME_W, (i // COLS)*FRAME_H))
-      sheet.save(f'assets/img/story-sprite-{s+1}.jpg', quality=88)
+      sheet = Image.new('RGB',(W*COLS,H*ROWS))
+      for i in range(24):
+          im = Image.open('frames/'+files[s*24+i]).convert('RGB')
+          sheet.paste(im,((i%COLS)*W,(i//COLS)*H))
+      sheet.save(f'assets/img/story-sprite-{s+1}.webp','WEBP',quality=93,method=6)
   "
   ```
 
-  This assumes a clip of a similar length (~8 seconds) and portrait orientation. For a
-  meaningfully longer or shorter clip, adjust the `fps` value in step 1 so `fps × duration ≈ 192`
-  (e.g. a 12-second clip would use `fps=16`), keeping the rest identical. The original raw file is
-  kept at `assets/video/hero.mp4` for your own reuse (social posts, etc.) — the website itself no
-  longer loads it.
+  The raw file stays at `assets/video/hero.mp4` for your own reuse (social posts, etc.) — the
+  website itself doesn't load it.
 
 ### Why the hero doesn't lag anymore
 Scrubbing an actual `<video>` by setting its `currentTime` is never instant — browsers can only

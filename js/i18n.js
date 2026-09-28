@@ -30,14 +30,6 @@
         }
       },
       home: {
-        valuesEyebrow: "لماذا تختارنا",
-        valuesTitle: "صياغة تستحق أن تبقى",
-        values: [
-          { title: "ذهب مضمون العيار", body: "كل قطعة مدموغة ومطابقة لعيارها، مع فاتورة وضمان مكتوب." },
-          { title: "تصنيع يدوي", body: "نُنجز أعمال اللحام والتلميع يدويًا داخل الورشة، لا سلاسل جاهزة مستوردة." },
-          { title: "تغليف فاخر", body: "كل طلب يصل في علبة العلامة التجارية جاهزة للتقديم كهدية." },
-          { title: "استبدال وصيانة", body: "نقدّم خدمة تلميع وصيانة لقطعك بعد الشراء بدون تكلفة إضافية." }
-        ],
         productsEyebrow: "مختارات",
         productsTitle: "من تشكيلتنا",
         productsBody: "نماذج من القطع المتاحة حاليًا — التشكيلة الكاملة في صفحة المنتجات.",
@@ -116,14 +108,6 @@
         }
       },
       home: {
-        valuesEyebrow: "Why choose us",
-        valuesTitle: "Craft worth keeping",
-        values: [
-          { title: "Guaranteed karat", body: "Every piece is hallmarked and matches its stated karat, with an invoice and written guarantee." },
-          { title: "Handworked", body: "Soldering and polishing happen by hand in our workshop — no imported ready-chains." },
-          { title: "Signature packaging", body: "Every order arrives in our branded box, gift-ready from the moment it's opened." },
-          { title: "Care included", body: "We polish and service pieces you bought from us afterwards, at no extra cost." }
-        ],
         productsEyebrow: "Selected",
         productsTitle: "From our collection",
         productsBody: "A few pieces available right now — see the full range on the products page.",

@@ -1,44 +1,46 @@
 /**
  * STORY SCROLL — canvas sprite-sheet scrubber.
  *
- * Why not just seek a <video>? Seeking video.currentTime is not instant:
- * browsers can only jump cleanly to keyframes (roughly every 1-2 seconds)
- * and have to decode forward from there, which is exactly the "lag" you
- * feel when scrubbing a real video file on scroll.
+ * The hero clip is pre-sliced into 96 still frames (540x960) packed into four
+ * WebP sprite sheets (24 frames each, 6x4 grid). Scrolling picks a frame index
+ * and draws that cell on a canvas — a plain image draw, so there is no video
+ * seek/decode lag at any scroll speed.
  *
- * Instead, the hero clip is pre-sliced into still frames laid out across four
- * sprite sheet images (assets/img/story-sprite-1..4.jpg — 192 frames total,
- * 48 per sheet in an 8x6 grid, generated with ffmpeg + Pillow). Scrolling
- * just picks a frame index and draws that cell onto a canvas — a plain
- * image draw, so it's exactly as fast at any scroll speed, with zero
- * decode/seek latency.
+ * Sharpness: the source clip is portrait (9:16). On phones the frame fills the
+ * screen ("cover"). On wide screens stretching it to fill the width would blur
+ * it ~3x, so instead it is drawn at its natural portrait size, centered, with a
+ * feathered edge over a blurred, darkened copy of the same frame.
  */
 (function () {
-  // 192 frames total, split across 4 sprite sheets (48 frames each, 8x6 grid)
-  // so every sheet stays comfortably under GPU texture size limits while
-  // each frame is rendered at 2x the resolution of a single giant sheet.
   const SHEET_URLS = [
-    "assets/img/story-sprite-1.jpg",
-    "assets/img/story-sprite-2.jpg",
-    "assets/img/story-sprite-3.jpg",
-    "assets/img/story-sprite-4.jpg"
+    "assets/img/story-sprite-1.webp",
+    "assets/img/story-sprite-2.webp",
+    "assets/img/story-sprite-3.webp",
+    "assets/img/story-sprite-4.webp"
   ];
-  const COLS = 8;
-  const ROWS = 6;
-  const FRAMES_PER_SHEET = COLS * ROWS; // 48
-  const TOTAL_FRAMES = FRAMES_PER_SHEET * SHEET_URLS.length; // 192
-  const FRAME_W = 384;
-  const FRAME_H = 682;
+  const COLS = 6;
+  const ROWS = 4;
+  const FRAMES_PER_SHEET = COLS * ROWS; // 24
+  const TOTAL_FRAMES = FRAMES_PER_SHEET * SHEET_URLS.length; // 96
+  const FRAME_W = 540;
+  const FRAME_H = 960;
+  // Crop the generator's watermark strips (top badge / bottom-right logo).
+  const CROP_TOP = 40;
+  const CROP_BOTTOM = 50;
+  const SRC_H = FRAME_H - CROP_TOP - CROP_BOTTOM; // 870
+  const CONTAIN_ABOVE_ASPECT = 0.9; // canvas w/h above this => show at natural size
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.addEventListener("DOMContentLoaded", () => {
     const story = document.querySelector("[data-story]");
     const canvas = document.querySelector("[data-story-canvas]");
+    const backdrop = document.querySelector("[data-story-backdrop]");
     if (!story || !canvas) return;
 
     const wrap = canvas.closest(".story-video-wrap");
     const ctx = canvas.getContext("2d");
+    const bctx = backdrop ? backdrop.getContext("2d") : null;
     const panels = Array.from(story.querySelectorAll(".story-panel"));
     const progressEls = Array.from(story.querySelectorAll(".story-progress span"));
 
@@ -69,6 +71,10 @@
       const h = wrap.clientHeight;
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
+      if (backdrop) {
+        backdrop.width = 96;
+        backdrop.height = Math.max(32, Math.round((96 * h) / w));
+      }
       if (ready) drawFrame(currentFrame === -1 ? 0 : currentFrame, true);
     }
 
@@ -81,35 +87,55 @@
       currentFrame = frameIndex;
 
       const sheetIndex = Math.min(sheets.length - 1, Math.floor(frameIndex / FRAMES_PER_SHEET));
-      const localIndex = frameIndex - sheetIndex * FRAMES_PER_SHEET;
-      const col = localIndex % COLS;
-      const row = Math.floor(localIndex / COLS);
-      const sx = col * FRAME_W;
-      const sy = row * FRAME_H;
+      const local = frameIndex - sheetIndex * FRAMES_PER_SHEET;
+      const sx = (local % COLS) * FRAME_W;
+      const sy = Math.floor(local / COLS) * FRAME_H + CROP_TOP;
+      const sheet = sheets[sheetIndex];
 
       const cw = canvas.width;
       const ch = canvas.height;
-      // "cover" fit: scale the source frame up so it fills the canvas
-      // completely, cropping whichever axis overflows, centered.
-      const scale = Math.max(cw / FRAME_W, ch / FRAME_H);
+      const contain = cw / ch > CONTAIN_ABOVE_ASPECT;
+      const scale = contain ? ch / SRC_H : Math.max(cw / FRAME_W, ch / SRC_H);
       const drawW = FRAME_W * scale;
-      const drawH = FRAME_H * scale;
+      const drawH = SRC_H * scale;
       const dx = (cw - drawW) / 2;
       const dy = (ch - drawH) / 2;
 
       ctx.clearRect(0, 0, cw, ch);
-      ctx.drawImage(sheets[sheetIndex], sx, sy, FRAME_W, FRAME_H, dx, dy, drawW, drawH);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(sheet, sx, sy, FRAME_W, SRC_H, dx, dy, drawW, drawH);
+
+      if (contain) {
+        // Feather the left/right edges of the portrait frame into the backdrop.
+        const g = ctx.createLinearGradient(dx, 0, dx + drawW, 0);
+        g.addColorStop(0, "rgba(0,0,0,0)");
+        g.addColorStop(0.07, "rgba(0,0,0,1)");
+        g.addColorStop(0.93, "rgba(0,0,0,1)");
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalCompositeOperation = "destination-in";
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, cw, ch);
+        ctx.globalCompositeOperation = "source-over";
+      }
+
+      if (backdrop && bctx) {
+        backdrop.style.display = contain ? "block" : "none";
+        if (contain) {
+          // Stretch the whole frame across the backdrop: once blurred it becomes a
+          // smooth ambient colour wash rather than a cropped, recognisable shape.
+          bctx.drawImage(sheet, sx, sy, FRAME_W, SRC_H, 0, 0, backdrop.width, backdrop.height);
+        }
+      }
     }
 
     function setActiveAct(progress) {
       const actIndex = Math.min(2, Math.floor(progress * 3));
       panels.forEach((p) => {
-        const act = Number(p.getAttribute("data-act"));
-        p.classList.toggle("is-active", act === actIndex);
+        p.classList.toggle("is-active", Number(p.getAttribute("data-act")) === actIndex);
       });
       progressEls.forEach((el, i) => {
-        const local = Math.max(0, Math.min(1, progress * 3 - i)) * 100;
-        el.style.setProperty("--fill", local + "%");
+        el.style.setProperty("--fill", Math.max(0, Math.min(1, progress * 3 - i)) * 100 + "%");
       });
     }
 
@@ -117,7 +143,6 @@
       resizeCanvas();
       panels.forEach((p) => p.classList.add("is-active"));
       window.addEventListener("resize", resizeCanvas);
-      // Show a representative mid-clip frame once the sheets finish loading.
       pendingFrame = Math.round((TOTAL_FRAMES - 1) * 0.5);
       return;
     }
@@ -135,8 +160,7 @@
       if (Math.abs(progress - lastProgress) < 0.0009) return;
       lastProgress = progress;
 
-      const frameIndex = Math.round(progress * (TOTAL_FRAMES - 1));
-      drawFrame(frameIndex);
+      drawFrame(Math.round(progress * (TOTAL_FRAMES - 1)));
       setActiveAct(progress);
     }
 

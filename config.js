@@ -6,16 +6,16 @@
 window.SITE_CONFIG = {
   // Paste the URL you get after deploying the Apps Script as a Web App.
   // Steps are in /apps-script/README inside the apps-script folder and in the project README.
-  googleSheetWebAppUrl: "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
+  googleSheetWebAppUrl: "https://script.google.com/macros/s/AKfycbwJxXYAmgrCiUgAEvguInH5QDQqi8pvc8XmEsRVrbkm33ZZtS7fGi74kNIqdEP8cmSt4A/exec",
 
   // WhatsApp number in international format, digits only (no +, spaces or dashes).
-  whatsappNumber: "201000000000",
+  whatsappNumber: "201114547766",
 
   // Shown in the contact sheet / footer.
-  phoneDisplay: "+20 100 000 0000",
+  phoneDisplay: "+20 111 454 7766",
   email: "info@gamalabohelal.com",
-  instagramUrl: "https://instagram.com/gamalabohelal",
-  facebookUrl: "https://facebook.com/gamalabohelal",
+  instagramUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
+  facebookUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
   addressAr: "القاهرة، مصر",
   addressEn: "Cairo, Egypt",
 
