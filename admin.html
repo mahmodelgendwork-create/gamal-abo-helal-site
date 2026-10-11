@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>لوحة المنتجات (مؤقتة) | Admin</title>
+<link rel="icon" href="assets/img/logo.png">
+<style>
+  :root{ --ink:#140b11; --panel:#1d1018; --card:#2e1a27; --line:rgba(228,187,181,.24); --accent:#e4bbb5; --cream:#f8eee9; --dim:rgba(248,238,233,.65); --bad:#ff8a8a; --ok:#9be3a8; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--ink); color:var(--cream); font-family:'Segoe UI',Tahoma,sans-serif; line-height:1.5; }
+  .wrap{ max-width:980px; margin:0 auto; padding:20px 16px 80px; }
+  h1{ font-size:22px; margin:0 0 4px; color:var(--accent); } h2{ font-size:17px; margin:0 0 14px; color:var(--accent); }
+  .sub{ color:var(--dim); font-size:13px; margin-bottom:20px; }
+  .box{ background:var(--panel); border:1px solid var(--line); padding:18px; margin-bottom:20px; }
+  label{ display:block; font-size:13px; color:var(--dim); margin:10px 0 4px; }
+  input,select,textarea{ width:100%; padding:10px; background:var(--ink); color:var(--cream); border:1px solid var(--line); font:inherit; }
+  textarea{ min-height:64px; resize:vertical; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; } .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 14px; }
+  @media(max-width:640px){ .grid,.grid3{ grid-template-columns:1fr; } }
+  button{ cursor:pointer; padding:10px 18px; border:1px solid var(--accent); background:var(--accent); color:var(--ink); font:inherit; font-weight:700; }
+  button.ghost{ background:transparent; color:var(--accent); } button.danger{ background:transparent; border-color:var(--bad); color:var(--bad); }
+  button:disabled{ opacity:.5; cursor:wait; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .msg{ margin-top:10px; font-size:14px; min-height:20px; } .msg.err{ color:var(--bad); } .msg.ok{ color:var(--ok); }
+  .preview{ display:flex; gap:12px; align-items:center; margin-top:10px; }
+  .preview img{ width:88px; height:88px; object-fit:cover; border:1px solid var(--line); background:var(--ink); }
+  .price{ font-size:20px; color:var(--accent); font-weight:700; }
+  .item{ display:flex; gap:12px; align-items:center; padding:10px 0; border-top:1px solid var(--line); }
+  .item img{ width:56px; height:56px; object-fit:cover; border:1px solid var(--line); }
+  .item .info{ flex:1; min-width:0; } .item .t{ font-weight:700; } .item .m{ font-size:12.5px; color:var(--dim); }
+  .tag{ font-size:11px; border:1px solid var(--line); padding:1px 6px; margin-inline-start:6px; } .tag.off{ color:var(--bad); border-color:var(--bad); }
+  .gold{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; } .gold div{ background:var(--ink); border:1px solid var(--line); padding:10px; text-align:center; } .gold b{ display:block; font-size:18px; color:var(--accent); }
+  .hidden{ display:none !important; }
+  .top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="login" class="box" style="max-width:380px;margin:60px auto;">
+    <h1>دخول الإدارة</h1>
+    <div class="sub">صفحة مؤقتة لإضافة المنتجات</div>
+    <label>الاسم</label><input id="lg-name" autocomplete="username">
+    <label>كلمة المرور</label><input id="lg-pass" type="password" autocomplete="current-password">
+    <div class="row"><button id="lg-btn">دخول</button></div>
+    <div class="msg err" id="lg-msg"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <div class="top">
+      <div><h1>لوحة المنتجات</h1><div class="sub">السعر = الجرامات × سعر جرام الذهب (حسب العيار) + الثابت</div></div>
+      <button class="ghost" id="logout">خروج</button>
+    </div>
+
+    <!-- GOLD -->
+    <div class="box">
+      <h2>سعر الذهب اليوم (جنيه / جرام)</h2>
+      <div class="gold" id="gold"></div>
+      <div class="sub" id="gold-meta" style="margin-top:8px;"></div>
+      <div class="row">
+        <button class="ghost" id="gold-refresh">تحديث الآن من السوق</button>
+        <button class="ghost" id="gold-manual-toggle">إدخال يدوي</button>
+      </div>
+      <div id="gold-manual" class="hidden">
+        <div class="grid3">
+          <div><label>عيار 24</label><input id="g24" type="number" step="0.01"></div>
+          <div><label>عيار 21</label><input id="g21" type="number" step="0.01"></div>
+          <div><label>عيار 18</label><input id="g18" type="number" step="0.01"></div>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;"><input id="g-auto" type="checkbox" style="width:auto;"> إبقاء التحديث التلقائي يعمل (إذا أُلغي، تبقى هذه الأسعار ثابتة)</label>
+        <div class="row"><button id="gold-save">حفظ الأسعار</button></div>
+      </div>
+      <div class="msg" id="gold-msg"></div>
+    </div>
+
+    <!-- FORM -->
+    <div class="box">
+      <h2 id="form-title">إضافة منتج</h2>
+      <input type="hidden" id="f-id">
+      <div class="grid">
+        <div><label>القسم</label><select id="f-cat"></select></div>
+        <div><label>عيار الذهب</label><select id="f-karat"><option>21</option><option>18</option><option>24</option></select></div>
+        <div><label>الاسم (عربي) *</label><input id="f-name-ar"></div>
+        <div><label>Name (English)</label><input id="f-name-en" dir="ltr"></div>
+        <div><label>الوصف (عربي)</label><textarea id="f-desc-ar"></textarea></div>
+        <div><label>Description (English)</label><textarea id="f-desc-en" dir="ltr"></textarea></div>
+        <div><label>الوزن (جرام) *</label><input id="f-gms" type="number" step="0.01" min="0"></div>
+        <div><label>الثابت (جنيه) – مصنعية/ربح</label><input id="f-const" type="number" step="1" min="0" value="0"></div>
+      </div>
+      <label>رابط الصورة (Google Drive – "أي شخص لديه الرابط" عارض)</label>
+      <input id="f-img" dir="ltr" placeholder="https://drive.google.com/file/d/.../view?usp=sharing">
+      <div class="preview"><img id="f-prev" alt=""><div><div class="sub" style="margin:0;">السعر المتوقع الآن</div><div class="price" id="f-price">—</div></div></div>
+      <label style="display:flex;gap:8px;align-items:center;"><input id="f-active" type="checkbox" checked style="width:auto;"> ظاهر في الموقع</label>
+      <div class="row"><button id="f-save">حفظ المنتج</button><button class="ghost" id="f-reset">جديد</button></div>
+      <div class="msg" id="f-msg"></div>
+    </div>
+
+    <!-- LIST -->
+    <div class="box"><h2>المنتجات (<span id="count">0</span>)</h2><div id="list"></div></div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script>
+(function () {
+  const C = window.SITE_CONFIG, $ = (id) => document.getElementById(id);
+  let creds = null, gold = {}, cats = [], products = [];
+
+  function hdr(extra) {
+    const h = Object.assign({ apikey: C.supabaseAnonKey }, extra || {});
+    if (/^eyJ/.test(C.supabaseAnonKey)) h.Authorization = "Bearer " + C.supabaseAnonKey; // legacy JWT keys only
+    return h;
+  }
+  function rpc(fn, args) {
+    return fetch(C.supabaseUrl + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: hdr({ "Content-Type": "application/json" }),
+      body: JSON.stringify(args)
+    }).then(async (r) => {
+      const t = await r.text(); let j; try { j = JSON.parse(t); } catch (e) { j = t; }
+      if (!r.ok) throw new Error((j && j.message) || "HTTP " + r.status);
+      return j;
+    });
+  }
+  const auth = () => ({ p_name: creds.name, p_password: creds.pass });
+  const say = (id, text, cls) => { const e = $(id); e.textContent = text || ""; e.className = "msg " + (cls || ""); };
+  const fmt = (n) => Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const rest = (p) => fetch(C.supabaseUrl + "/rest/v1/" + p, { headers: hdr() }).then((r) => r.json());
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  /* ---------- login ---------- */
+  async function login(name, pass) {
+    say("lg-msg", "");
+    $("lg-btn").disabled = true;
+    try {
+      if (!C.supabaseUrl || /PASTE_/.test(C.supabaseUrl)) throw new Error("ضع بيانات Supabase في js/config.js أولًا");
+      const ok = await rpc("admin_login", { p_name: name, p_password: pass });
+      if (ok !== true) throw new Error("الاسم أو كلمة المرور غير صحيحة");
+      creds = { name, pass };
+      try { sessionStorage.setItem("gah_admin", JSON.stringify(creds)); } catch (e) {}
+      $("login").classList.add("hidden"); $("app").classList.remove("hidden");
+      await boot();
+    } catch (e) { say("lg-msg", e.message, "err"); }
+    $("lg-btn").disabled = false;
+  }
+  $("lg-btn").onclick = () => login($("lg-name").value.trim(), $("lg-pass").value);
+  $("lg-pass").onkeydown = (e) => { if (e.key === "Enter") $("lg-btn").click(); };
+  $("logout").onclick = () => { try { sessionStorage.removeItem("gah_admin"); } catch (e) {} location.reload(); };
+
+  async function boot() {
+    cats = await rest("categories?select=slug,name_ar&order=sort_order");
+    $("f-cat").innerHTML = cats.map((c) => `<option value="${esc(c.slug)}">${esc(c.name_ar)}</option>`).join("");
+    await Promise.all([loadGold(), loadProducts()]);
+    updatePrice();
+  }
+
+  /* ---------- gold ---------- */
+  async function loadGold() {
+    const rows = await rest("gold_prices?select=karat,price_per_gram,source,updated_at&order=karat.desc");
+    gold = {}; rows.forEach((r) => (gold[r.karat] = Number(r.price_per_gram)));
+    $("gold").innerHTML = rows.map((r) => `<div>عيار ${r.karat}<b>${fmt(r.price_per_gram)}</b></div>`).join("");
+    const r0 = rows[0];
+    $("gold-meta").textContent = r0 ? `المصدر: ${r0.source || "-"} — آخر تحديث: ${new Date(r0.updated_at).toLocaleString("ar-EG")}` : "";
+    if (rows.length) { $("g24").value = gold[24] || ""; $("g21").value = gold[21] || ""; $("g18").value = gold[18] || ""; }
+    try { $("g-auto").checked = (await rpc("admin_get_gold_settings", auth())) !== false; } catch (e) {}
+    if (!gold[21]) say("gold-msg", "سعر الذهب لم يُحدَّد بعد — اضغط «تحديث الآن من السوق» أو أدخله يدويًا. المنتجات لا تظهر قبل تحديد السعر.", "err");
+  }
+  $("gold-manual-toggle").onclick = () => $("gold-manual").classList.toggle("hidden");
+  $("gold-save").onclick = async () => {
+    try {
+      await rpc("admin_set_gold", { ...auth(), p24: +$("g24").value, p21: +$("g21").value, p18: +$("g18").value, p_source: "manual", p_auto: $("g-auto").checked });
+      say("gold-msg", "تم حفظ الأسعار ✓", "ok"); await loadGold(); await loadProducts(); updatePrice();
+    } catch (e) { say("gold-msg", e.message, "err"); }
+  };
+  $("gold-refresh").onclick = async () => {
+    say("gold-msg", "جاري الجلب...");
+    try {
+      const g = await (await fetch("https://api.gold-api.com/price/XAU")).json();
+      const fx = await (await fetch("https://open.er-api.com/v6/latest/USD")).json();
+      const g24 = (g.price / 31.1035) * fx.rates.EGP;
+      if (!(g24 > 0)) throw new Error("بيانات غير صالحة");
+      const r = (k) => Math.round(g24 * (k / 24) * 100) / 100;
+      await rpc("admin_set_gold", { ...auth(), p24: r(24), p21: r(21), p18: r(18), p_source: "auto: gold-api.com x open.er-api.com", p_auto: null });
+      say("gold-msg", "تم التحديث من السوق ✓", "ok"); await loadGold(); await loadProducts(); updatePrice();
+    } catch (e) { say("gold-msg", "تعذّر الجلب من المتصفح (" + e.message + ") — التحديث التلقائي يعمل من الخادم، أو أدخل السعر يدويًا.", "err"); }
+  };
+
+  /* ---------- products ---------- */
+  const priceOf = (karat, gms, c) => gold[karat] > 0 && gms > 0 ? Math.round(gms * gold[karat] + (+c || 0)) : null;
+  function updatePrice() {
+    const p = priceOf(+$("f-karat").value, +$("f-gms").value, $("f-const").value);
+    $("f-price").textContent = p == null ? "—" : fmt(p) + " ج.م";
+    $("f-prev").src = window.CATALOG.imageUrl($("f-img").value, 300);
+  }
+  ["f-karat", "f-gms", "f-const"].forEach((id) => ($(id).oninput = updatePrice));
+  $("f-img").oninput = updatePrice;
+  $("f-prev").onerror = function () { this.removeAttribute("src"); this.alt = "لا تظهر الصورة — تأكد أن الملف مشارك للجميع"; };
+
+  function resetForm() {
+    $("f-id").value = ""; $("form-title").textContent = "إضافة منتج";
+    ["f-name-ar", "f-name-en", "f-desc-ar", "f-desc-en", "f-gms", "f-img"].forEach((id) => ($(id).value = ""));
+    $("f-const").value = 0; $("f-active").checked = true; updatePrice();
+  }
+  $("f-reset").onclick = () => { resetForm(); say("f-msg", ""); };
+
+  $("f-save").onclick = async () => {
+    const nameAr = $("f-name-ar").value.trim(), gms = +$("f-gms").value;
+    if (!nameAr) return say("f-msg", "الاسم العربي مطلوب", "err");
+    if (!(gms > 0)) return say("f-msg", "أدخل الوزن بالجرام", "err");
+    $("f-save").disabled = true;
+    try {
+      await rpc("admin_save_product", { ...auth(), p: {
+        id: $("f-id").value || null, category: $("f-cat").value, karat: +$("f-karat").value, gms,
+        constant_egp: +$("f-const").value || 0, name_ar: nameAr, name_en: $("f-name-en").value.trim(),
+        desc_ar: $("f-desc-ar").value.trim(), desc_en: $("f-desc-en").value.trim(),
+        image_url: $("f-img").value.trim(), active: $("f-active").checked } });
+      say("f-msg", "تم الحفظ ✓", "ok"); resetForm(); await loadProducts();
+    } catch (e) { say("f-msg", e.message, "err"); }
+    $("f-save").disabled = false;
+  };
+
+  async function loadProducts() {
+    products = await rpc("admin_list_products", auth());
+    $("count").textContent = products.length;
+    const catName = Object.fromEntries(cats.map((c) => [c.slug, c.name_ar]));
+    $("list").innerHTML = products.map((p) => `
+      <div class="item">
+        <img src="${esc(window.CATALOG.imageUrl(p.image_url, 160))}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+        <div class="info"><div class="t">${esc(p.name_ar)}${p.active ? "" : '<span class="tag off">مخفي</span>'}</div>
+          <div class="m">${esc(catName[p.category] || p.category)} · عيار ${p.karat} · ${fmt(p.gms)} جم · ثابت ${fmt(p.constant_egp)} · <b>${p.price == null ? "—" : fmt(p.price) + " ج.م"}</b></div></div>
+        <button class="ghost" data-edit="${p.id}">تعديل</button>
+        <button class="danger" data-del="${p.id}">حذف</button>
+      </div>`).join("") || '<div class="sub">لا توجد منتجات بعد.</div>';
+  }
+  $("list").onclick = async (e) => {
+    const ed = e.target.dataset.edit, del = e.target.dataset.del;
+    if (ed) {
+      const p = products.find((x) => x.id === ed);
+      $("f-id").value = p.id; $("form-title").textContent = "تعديل منتج";
+      $("f-cat").value = p.category; $("f-karat").value = p.karat; $("f-name-ar").value = p.name_ar; $("f-name-en").value = p.name_en;
+      $("f-desc-ar").value = p.desc_ar; $("f-desc-en").value = p.desc_en; $("f-gms").value = p.gms; $("f-const").value = p.constant_egp;
+      $("f-img").value = p.image_url; $("f-active").checked = p.active; updatePrice(); scrollTo({ top: 0, behavior: "smooth" });
+    } else if (del && confirm("حذف هذا المنتج نهائيًا؟")) {
+      try { await rpc("admin_delete_product", { ...auth(), p_id: del }); await loadProducts(); } catch (er) { alert(er.message); }
+    }
+  };
+
+  // resume session in this tab
+  try { const s = JSON.parse(sessionStorage.getItem("gah_admin") || "null"); if (s) login(s.name, s.pass); } catch (e) {}
+})();
+</script>
+</body>
+</html>

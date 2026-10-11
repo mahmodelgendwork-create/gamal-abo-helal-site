@@ -104,7 +104,7 @@
         if (!p) return "";
         return `
         <div class="cart-line" data-line="${p.id}">
-          <img src="${p.image}" alt="">
+          <img src="${p.image}" alt="" referrerpolicy="no-referrer">
           <div class="cart-line-body">
             <div class="cart-line-title">${p.name[lang()]}</div>
             <div class="cart-line-meta">${money(p.price)}</div>

@@ -33,7 +33,7 @@
     const l = lang();
     return `
       <article class="product-card" data-product="${p.id}" data-category="${p.category}">
-        <div class="product-media"><img src="${p.image}" alt="${p.name[l]}" loading="lazy"></div>
+        <div class="product-media"><img src="${p.image}" alt="${p.name[l]}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/img/logo.png'"></div>
         <div class="product-body">
           <h3>${p.name[l]}</h3>
           <p class="product-meta">${p.desc[l]}</p>
@@ -61,11 +61,15 @@
     });
   }
 
+  function emptyMsg() {
+    return `<p class="product-meta" style="grid-column:1/-1;text-align:center;">${lang() === "ar" ? "سيتم إضافة المنتجات قريبًا." : "Products are coming soon."}</p>`;
+  }
+
   function renderFeaturedProducts() {
     const mount = document.getElementById("featured-products");
     if (!mount) return;
     const featured = window.PRODUCTS.slice(0, 3);
-    mount.innerHTML = featured.map(productCard).join("");
+    mount.innerHTML = featured.map(productCard).join("") || emptyMsg();
     labelAddButtons(mount);
   }
 
@@ -75,21 +79,32 @@
     let activeFilter = "all";
 
     function paint() {
+      paintChips();
       const list = window.PRODUCTS.filter((p) => activeFilter === "all" || p.category === activeFilter);
-      mount.innerHTML = list.map(productCard).join("");
+      mount.innerHTML = list.map(productCard).join("") || emptyMsg();
       labelAddButtons(mount);
     }
 
-    document.querySelectorAll(".chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        document.querySelectorAll(".chip").forEach((c) => c.classList.remove("is-active"));
-        chip.classList.add("is-active");
-        activeFilter = chip.getAttribute("data-filter");
-        paint();
+    // Filter chips are built from the categories that actually have products.
+    function paintChips() {
+      const row = document.getElementById("filter-row");
+      if (!row) return;
+      const used = new Set(window.PRODUCTS.map((p) => p.category));
+      const cats = window.CATEGORIES.filter((c) => used.has(c.slug));
+      const allLabel = window.I18N.get(window.I18N.dict[lang()], "products.filters.all");
+      row.innerHTML =
+        `<button class="chip ${activeFilter === "all" ? "is-active" : ""}" data-filter="all">${allLabel}</button>` +
+        cats.map((c) => `<button class="chip ${activeFilter === c.slug ? "is-active" : ""}" data-filter="${c.slug}">${c.name[lang()]}</button>`).join("");
+      row.querySelectorAll(".chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          activeFilter = chip.getAttribute("data-filter");
+          paint();
+        });
       });
-    });
+    }
 
     paint();
+    document.addEventListener("catalogready", paint);
     document.addEventListener("langchange", paint);
   }
 
@@ -103,6 +118,11 @@
 
     document.addEventListener("langchange", () => {
       renderFeaturedProducts();
+    });
+    // Prices/products arrive from the database after the page is up.
+    document.addEventListener("catalogready", () => {
+      renderFeaturedProducts();
+      if (window.CART) window.CART.render();
     });
   });
 })();

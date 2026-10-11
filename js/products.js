@@ -1,41 +1,71 @@
 /**
- * PRODUCT CATALOG
- * ----------------
- * Edit / add products here. Each product needs a unique "id".
- * "image" paths are relative to the site root.
- * "category" must be one of: "necklace", "bracelet", "box".
+ * PRODUCT CATALOG (loaded from the database)
+ * -------------------------------------------
+ * Products and categories live in Supabase. Prices are computed there:
+ *   price = gms * gold price per gram (for the product's karat) + constant
+ * so they are always current. Add/edit products from /admin.html.
+ *
+ * Exposes:
+ *   window.PRODUCTS    [{ id, category, image, price, name:{ar,en}, desc:{ar,en}, karat, gms }]
+ *   window.CATEGORIES  [{ slug, name:{ar,en} }]
+ *   window.CATALOG.ready  -> Promise resolved when loaded (also fires "catalogready")
  */
-window.PRODUCTS = [
-  {
-    id: "gh-001",
-    category: "necklace",
-    image: "assets/img/product-1.jpg",
-    price: 18500,
-    name: { ar: "سلسلة الشراع الذهبية", en: "Golden Sail Chain" },
-    desc: { ar: "سلسلة عيار ٢١ بحلقات مفرغة وقفل أسطواني منقوش.", en: "21k chain with hollow links and an engraved cylinder clasp." }
-  },
-  {
-    id: "gh-002",
-    category: "necklace",
-    image: "assets/img/product-2.jpg",
-    price: 21900,
-    name: { ar: "سلسلة الحلقة المزدوجة", en: "Double Link Chain" },
-    desc: { ar: "تصميم حلقات متتابعة سميكة، مثالية للارتداء اليومي.", en: "Chunky sequential links, built for everyday wear." }
-  },
-  {
-    id: "gh-003",
-    category: "box",
-    image: "assets/img/product-3.jpg",
-    price: 22900,
-    name: { ar: "طقم الهدية الفاخر", en: "Signature Gift Set" },
-    desc: { ar: "القطعة مع علبة العلامة المخملية، جاهزة للإهداء فورًا.", en: "Piece plus our velvet signature box, ready to gift." }
-  },
-  {
-    id: "gh-004",
-    category: "bracelet",
-    image: "assets/img/product-2.jpg",
-    price: 12400,
-    name: { ar: "سوار الحلقة الذهبية", en: "Golden Link Bracelet" },
-    desc: { ar: "سوار مطابق لتصميم السلسلة، بنفس تشطيب القفل الأسطواني.", en: "A matching bracelet in the same chain finish and clasp style." }
+(function () {
+  window.PRODUCTS = [];
+  window.CATEGORIES = [];
+
+  // Turn a Google Drive share link into a direct image URL.
+  // The file must be shared as "Anyone with the link can view".
+  function imageUrl(link, width) {
+    link = (link || "").trim();
+    if (!link) return "assets/img/logo.png";
+    const m = link.match(/\/d\/([\w-]{10,})/) || link.match(/[?&]id=([\w-]{10,})/);
+    if (m && /drive\.google\.com|docs\.google\.com/.test(link)) {
+      return "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w" + (width || 900);
+    }
+    return link; // any other direct image URL is used as-is
   }
-];
+
+  function api(path) {
+    const c = window.SITE_CONFIG || {};
+    const headers = { apikey: c.supabaseAnonKey };
+    if (/^eyJ/.test(c.supabaseAnonKey)) headers.Authorization = "Bearer " + c.supabaseAnonKey; // legacy JWT keys only
+    return fetch(c.supabaseUrl + "/rest/v1/" + path, { headers }).then((r) => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function load() {
+    const c = window.SITE_CONFIG || {};
+    if (!c.supabaseUrl || /PASTE_/.test(c.supabaseUrl)) {
+      console.warn("Supabase is not configured yet (js/config.js).");
+      return Promise.resolve();
+    }
+    return Promise.all([
+      api("categories?select=slug,name_ar,name_en&order=sort_order"),
+      api("products_priced?select=*&order=created_at.desc")
+    ])
+      .then(([cats, prods]) => {
+        window.CATEGORIES = cats.map((k) => ({ slug: k.slug, name: { ar: k.name_ar, en: k.name_en || k.name_ar } }));
+        window.PRODUCTS = prods
+          .filter((p) => p.price != null)
+          .map((p) => ({
+            id: p.id,
+            category: p.category,
+            image: imageUrl(p.image_url),
+            price: Number(p.price),
+            karat: p.karat,
+            gms: Number(p.gms),
+            name: { ar: p.name_ar, en: p.name_en || p.name_ar },
+            desc: { ar: p.desc_ar, en: p.desc_en || p.desc_ar }
+          }));
+      })
+      .catch((e) => console.error("Could not load catalog:", e));
+  }
+
+  window.CATALOG = {
+    imageUrl,
+    ready: load().then(() => document.dispatchEvent(new Event("catalogready")))
+  };
+})();
