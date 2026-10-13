@@ -12,6 +12,10 @@ window.SITE_CONFIG = {
   // Leave as {} to use the automatic price.
   goldPriceOverride: {},
 
+  // Database (Supabase). Project Settings -> API. The publishable/anon key is meant to be public.
+  supabaseUrl: "https://qbndjqvtgnkcjlcatgkp.supabase.co",
+  supabaseAnonKey: "sb_publishable_tJF8wLLtgU4kmTTPJjflSA_K5rmlSnr",
+
   // WhatsApp number in international format, digits only (no +, spaces or dashes).
   whatsappNumber: "201114547766",
 

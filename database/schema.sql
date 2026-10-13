@@ -75,7 +75,8 @@ create table if not exists public.products (
   karat        int  not null check (karat in (18, 21, 24)),
   gms          numeric(10,2) not null check (gms > 0),
   constant_egp numeric(12,2) not null default 0,
-  image_url    text not null default '',
+  image_url    text not null default '',          -- cover photo (= first of images)
+  images       jsonb not null default '[]'::jsonb, -- list of photo links (first = cover)
   active       boolean not null default true,
   created_at   timestamptz not null default now()
 );
@@ -90,7 +91,8 @@ select
   p.karat, p.gms, p.constant_egp, p.image_url, p.created_at,
   case when g.price_per_gram > 0
        then round(p.gms * g.price_per_gram + p.constant_egp)
-  end as price
+  end as price,
+  p.images
 from public.products p
 join public.categories c on c.id = p.category_id and c.active
 left join public.gold_prices g on g.karat = p.karat
@@ -174,12 +176,13 @@ begin
 
   if nullif(p->>'id','') is null then
     insert into products (category_id, name_ar, name_en, desc_ar, desc_en,
-                          karat, gms, constant_egp, image_url, active)
+                          karat, gms, constant_egp, image_url, images, active)
     values (cid, p->>'name_ar', coalesce(p->>'name_en',''),
             coalesce(p->>'desc_ar',''), coalesce(p->>'desc_en',''),
             (p->>'karat')::int, (p->>'gms')::numeric,
             coalesce(nullif(p->>'constant_egp','')::numeric, 0),
-            coalesce(p->>'image_url',''), coalesce((p->>'active')::boolean, true))
+            coalesce(p->'images'->>0, p->>'image_url', ''), coalesce(p->'images', '[]'::jsonb),
+            coalesce((p->>'active')::boolean, true))
     returning id into pid;
   else
     update products set
@@ -188,7 +191,8 @@ begin
       desc_ar = coalesce(p->>'desc_ar',''), desc_en = coalesce(p->>'desc_en',''),
       karat = (p->>'karat')::int, gms = (p->>'gms')::numeric,
       constant_egp = coalesce(nullif(p->>'constant_egp','')::numeric, 0),
-      image_url = coalesce(p->>'image_url',''),
+      image_url = coalesce(p->'images'->>0, p->>'image_url', ''),
+      images = coalesce(p->'images', '[]'::jsonb),
       active = coalesce((p->>'active')::boolean, true)
     where id = (p->>'id')::uuid
     returning id into pid;
