@@ -92,8 +92,9 @@
   </div>
 </div>
 
-<script src="js/config.js"></script>
-<script src="js/products.js"></script>
+<script>/* always load the freshest config/catalog (avoids stale browser cache) */
+var V = Date.now();
+document.write('<script src="js/config.js?v=' + V + '"><\/script><script src="js/products.js?v=' + V + '"><\/script>');</script>
 <script>
 (function () {
   const C = window.SITE_CONFIG, $ = (id) => document.getElementById(id);
