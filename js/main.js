@@ -33,7 +33,15 @@
     const l = lang();
     return `
       <article class="product-card" data-product="${p.id}" data-category="${p.category}">
-        <div class="product-media" data-gallery="${p.id}" role="button" tabindex="0" aria-label="${p.name[l]}"><img src="${p.image}" alt="${p.name[l]}" loading="lazy" decoding="async" width="480" height="600" referrerpolicy="no-referrer" ${p.localDefault ? `data-pid="${p.id}"` : ""} onerror="CATALOG.imgFallback(this)">${p.photos.length > 1 ? `<span class="photo-count">${p.photos.length}</span>` : ""}</div>
+        <div class="product-media" data-gallery="${p.id}">
+          <div class="slides" data-slides>
+            ${p.photos.map((ph, i) => `<div class="slide"><img alt="${p.name[l]}" width="480" height="520" referrerpolicy="no-referrer" decoding="async" ${i === 0 ? `src="${p.image}" loading="lazy"` : `data-src="${ph.small}"`} onerror="CATALOG.imgFallback(this)" onload="this.classList.add('is-in')"></div>`).join("")}
+          </div>
+          ${p.photos.length > 1 ? `
+            <button class="m-arrow m-prev" data-arrow="prev" type="button" aria-label="prev">&#8249;</button>
+            <button class="m-arrow m-next" data-arrow="next" type="button" aria-label="next">&#8250;</button>
+            <div class="dots">${p.photos.map((_, i) => `<span class="dot ${i === 0 ? "is-active" : ""}"></span>`).join("")}</div>` : ""}
+        </div>
         <div class="product-body">
           <h3>${p.name[l]}</h3>
           <p class="product-meta">${p.desc[l]}</p>
@@ -43,6 +51,48 @@
           </div>
         </div>
       </article>`;
+  }
+
+  /* Carousel inside each card. Only the first photo loads with the page; the next one loads
+     when the visitor first touches/hovers the card, then always "one ahead" while swiping. */
+  function initCarousels(root) {
+    root.querySelectorAll(".product-media").forEach((media) => {
+      const slides = media.querySelector("[data-slides]");
+      const n = slides.children.length;
+      slides.querySelectorAll("img").forEach((im) => { if (im.complete && im.naturalWidth) im.classList.add("is-in"); });
+      if (n < 2) return;
+      const dots = media.querySelectorAll(".dot");
+      const prev = media.querySelector(".m-prev"), next = media.querySelector(".m-next");
+      const rtl = () => document.documentElement.dir === "rtl";
+      const load = (i) => {
+        const im = slides.children[i] && slides.children[i].querySelector("img[data-src]");
+        if (im) { im.src = im.getAttribute("data-src"); im.removeAttribute("data-src"); }
+      };
+      const index = () => Math.min(n - 1, Math.max(0, Math.round(Math.abs(slides.scrollLeft) / slides.clientWidth)));
+      media._idx = 0;
+      const sync = (initial) => {
+        const i = index(); media._idx = i;
+        dots.forEach((d, k) => d.classList.toggle("is-active", k === i));
+        if (prev) prev.hidden = i === 0; if (next) next.hidden = i === n - 1;
+        load(i);
+        if (initial !== true) load(i + 1);   // page load fetches only the cover photo
+      };
+      const goTo = (i) => {
+        i = Math.min(n - 1, Math.max(0, i));
+        slides.scrollTo({ left: (rtl() ? -1 : 1) * i * slides.clientWidth, behavior: "smooth" });
+      };
+      let raf = 0;
+      slides.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => sync()); }, { passive: true });
+      const warm = () => load(1);
+      ["pointerenter", "touchstart", "focusin"].forEach((ev) => media.addEventListener(ev, warm, { once: true, passive: true }));
+      media.addEventListener("click", (e) => {
+        const a = e.target.closest("[data-arrow]");
+        if (!a) return;
+        e.stopPropagation(); e.preventDefault();
+        goTo(media._idx + (a.getAttribute("data-arrow") === "next" ? 1 : -1));
+      }, true);
+      sync(true);
+    });
   }
 
   function labelAddButtons(root) {
@@ -71,6 +121,7 @@
     const featured = window.PRODUCTS.slice(0, 3);
     mount.innerHTML = featured.map(productCard).join("") || emptyMsg();
     labelAddButtons(mount);
+    initCarousels(mount);
   }
 
   function renderProductsPage() {
@@ -83,6 +134,7 @@
       const list = window.PRODUCTS.filter((p) => activeFilter === "all" || p.category === activeFilter);
       mount.innerHTML = list.map(productCard).join("") || emptyMsg();
       labelAddButtons(mount);
+      initCarousels(mount);
     }
 
     // Filter chips are built from the categories that actually have products.
@@ -109,11 +161,12 @@
   }
 
   function openFrom(e) {
+    if (e.target.closest("[data-arrow]")) return;
     const m = e.target.closest("[data-gallery]");
     if (!m || (e.type === "keydown" && e.key !== "Enter" && e.key !== " ")) return;
     e.preventDefault();
     const p = window.PRODUCTS.find((x) => x.id === m.getAttribute("data-gallery"));
-    if (p && window.GALLERY) window.GALLERY.open(p);
+    if (p && window.GALLERY) window.GALLERY.open(p, m._idx || 0);
   }
   document.addEventListener("click", openFrom);
   document.addEventListener("keydown", openFrom);

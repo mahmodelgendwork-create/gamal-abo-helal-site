@@ -72,7 +72,7 @@
   }
   function go(d) { if (state.p.photos.length > 1) show(state.i + d); }
 
-  function open(p) {
+  function open(p, start) {
     if (!box) build();
     state = { p, i: 0 };
     const l = lang(), n = p.photos.length;
@@ -86,7 +86,7 @@
       .map((ph, i) => `<button class="gallery-thumb" data-g-i="${i}" type="button"><img src="${ph.thumb}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="60" height="60"></button>`).join("");
     box.hidden = false;
     document.body.classList.add("no-scroll");
-    show(0);
+    show(start || 0);
   }
   function close() {
     box.hidden = true;
