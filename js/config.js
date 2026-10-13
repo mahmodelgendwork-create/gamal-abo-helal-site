@@ -8,18 +8,18 @@ window.SITE_CONFIG = {
   // Steps are in /apps-script/README inside the apps-script folder and in the project README.
   googleSheetWebAppUrl: "https://script.google.com/macros/s/AKfycbwJxXYAmgrCiUgAEvguInH5QDQqi8pvc8XmEsRVrbkm33ZZtS7fGi74kNIqdEP8cmSt4A/exec",
 
-  // Database (Supabase). Project Settings -> API. The anon key is meant to be public.
-  supabaseUrl: "https://qbndjqvtgnkcjlcatgkp.supabase.co",
-  supabaseAnonKey: "sb_publishable_tJF8wLLtgU4kmTTPJjflSA_K5rmlSnr",
+  // Optional: type a gold price per gram (EGP) to override the automatic one, e.g. { 21: 6300 }.
+  // Leave as {} to use the automatic price.
+  goldPriceOverride: {},
 
   // WhatsApp number in international format, digits only (no +, spaces or dashes).
-  whatsappNumber: "201000000000",
+  whatsappNumber: "201114547766",
 
   // Shown in the contact sheet / footer.
-  phoneDisplay: "+20 100 000 0000",
+  phoneDisplay: "+20 111 454 7766",
   email: "info@gamalabohelal.com",
-  instagramUrl: "https://instagram.com/gamalabohelal",
-  facebookUrl: "https://facebook.com/gamalabohelal",
+  instagramUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
+  facebookUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
   addressAr: "القاهرة، مصر",
   addressEn: "Cairo, Egypt",
 

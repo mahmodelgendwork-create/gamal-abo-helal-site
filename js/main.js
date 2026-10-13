@@ -33,7 +33,7 @@
     const l = lang();
     return `
       <article class="product-card" data-product="${p.id}" data-category="${p.category}">
-        <div class="product-media"><img src="${p.image}" alt="${p.name[l]}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/img/logo.png'"></div>
+        <div class="product-media" data-gallery="${p.id}" role="button" tabindex="0" aria-label="${p.name[l]}"><img src="${p.image}" alt="${p.name[l]}" loading="lazy" decoding="async" width="480" height="600" referrerpolicy="no-referrer" ${p.localDefault ? `data-pid="${p.id}"` : ""} onerror="CATALOG.imgFallback(this)">${p.photos.length > 1 ? `<span class="photo-count">${p.photos.length}</span>` : ""}</div>
         <div class="product-body">
           <h3>${p.name[l]}</h3>
           <p class="product-meta">${p.desc[l]}</p>
@@ -107,6 +107,16 @@
     document.addEventListener("catalogready", paint);
     document.addEventListener("langchange", paint);
   }
+
+  function openFrom(e) {
+    const m = e.target.closest("[data-gallery]");
+    if (!m || (e.type === "keydown" && e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    const p = window.PRODUCTS.find((x) => x.id === m.getAttribute("data-gallery"));
+    if (p && window.GALLERY) window.GALLERY.open(p);
+  }
+  document.addEventListener("click", openFrom);
+  document.addEventListener("keydown", openFrom);
 
   document.addEventListener("DOMContentLoaded", () => {
     injectComponents();

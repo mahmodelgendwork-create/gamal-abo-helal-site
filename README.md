@@ -24,27 +24,23 @@ assets/img/product-*.jpg  Placeholder product photos (pulled as frames from your
 apps-script/Code.gs      Google Apps Script — receives orders and writes them to a Sheet
 ```
 
-## 0. Database, prices & admin (NEW — do this first)
+## 0. Products (CSV + images) and automatic prices
 
-Products now live in a Supabase (Postgres) database, not in `js/products.js`.
-
-1. Create a free project at supabase.com. Open **SQL Editor**, paste `database/schema.sql`, run it.
-   It creates the categories (rings, wedding bands, chains, pendants, bracelets, bangles, earrings,
-   anklets, sets, kids, coins & bars, gift sets), products, gold prices, and the admin functions.
-2. Create your temporary admin: in the same file, un-comment the last `insert into public.admin_users`
-   block, set a name + strong password, run it. (Remove access later with `delete from public.admin_users;`.)
-3. **Project Settings → API**: copy *Project URL* and the *anon public key* into `js/config.js`
-   (`supabaseUrl`, `supabaseAnonKey`). The anon key is meant to be public; visitors can only read.
-4. Automatic gold price: in your GitHub repo → **Settings → Secrets and variables → Actions**, add
-   `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` (the *service_role* key — keep it secret, never put it in js/config.js).
-   `.github/workflows/update-gold.yml` then refreshes the price every 30 minutes (run it once by hand from the Actions tab).
-5. Open `/admin.html`, log in, add products. Image = a Google Drive link shared as "Anyone with the link".
-
-**Price rule:** `price = gms × gold price per gram (for the product's karat) + constant`, computed in the
-database, so every product updates when the gold price changes. Gold price/gram (24k) =
-XAU/USD ÷ 31.1035 × USD→EGP, then ×0.875 for 21k and ×0.75 for 18k. Egyptian shop prices usually sit
-a little above this, so adjust with the per-product constant, or type prices manually in the admin page
-(untick "keep automatic update" to freeze them).
+- **`data/products.csv`** is the product database. One row per product. Open it in Excel / Google Sheets,
+  edit, and save as **CSV UTF-8**. Columns: `id, category, name_ar, name_en, desc_ar, desc_en, karat, gms, constant_egp, active`
+  (`active` = 0 hides a product; empty or 1 shows it) plus an optional last column **`images`**.
+- **`products/`** holds the photos, named with the id: `0001.png`, `0002.png` (`.jpg/.jpeg/.webp` also work).
+- **Several photos per product:** put them in the `images` column separated by ` | `, e.g.
+  `https://drive.google.com/file/d/AAA/view | https://drive.google.com/file/d/BBB/view`.
+  Each Drive file must be shared as *Anyone with the link → Viewer*. The first link is the cover photo.
+  An entry can also be a file name from `products/` (e.g. `0001-2.png`). If `images` is empty, `products/<id>.png` is used.
+  Speed: the product grid loads only the cover photo, resized by Drive to ~480px; the other photos load only when a
+  visitor taps the photo (gallery), one at a time, plus tiny 120px thumbnails.
+- **`data/categories.csv`** is the category list (slug used in the `category` column).
+- **Price** = `gms × gold price per gram (for the karat) + constant_egp`, computed in the browser.
+- **Gold price:** `.github/workflows/update-gold.yml` refreshes `data/gold.json` every 30 minutes
+  (24k = XAU/USD ÷ 31.1035 × USD→EGP; 21k ×0.875; 18k ×0.75). To force a price, set `goldPriceOverride` in `js/config.js`.
+- A later move to a real database is prepared in `future/supabase-database/` (not used now).
 
 ## 1. Try it locally first
 

@@ -104,7 +104,7 @@
         if (!p) return "";
         return `
         <div class="cart-line" data-line="${p.id}">
-          <img src="${p.image}" alt="" referrerpolicy="no-referrer">
+          <img src="${p.image}" alt="" width="64" height="64" referrerpolicy="no-referrer" ${p.localDefault ? `data-pid="${p.id}"` : ""} onerror="CATALOG.imgFallback(this)">
           <div class="cart-line-body">
             <div class="cart-line-title">${p.name[lang()]}</div>
             <div class="cart-line-meta">${money(p.price)}</div>
