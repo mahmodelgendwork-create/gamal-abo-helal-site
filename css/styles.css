@@ -615,7 +615,7 @@ body.no-scroll{ overflow:hidden; }
 }
 .page-bg video{
   width:100%; height:100%; object-fit:cover; display:block;
-  opacity:.22;               /* low opacity so products stay readable */
+  opacity:.60;               /* low opacity so products stay readable */
 }
 .page-bg::after{            /* soft darkening so text always reads well */
   content:""; position:absolute; inset:0;
