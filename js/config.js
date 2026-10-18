@@ -8,9 +8,14 @@ window.SITE_CONFIG = {
   // Steps are in /apps-script/README inside the apps-script folder and in the project README.
   googleSheetWebAppUrl: "https://script.google.com/macros/s/AKfycbwJxXYAmgrCiUgAEvguInH5QDQqi8pvc8XmEsRVrbkm33ZZtS7fGi74kNIqdEP8cmSt4A/exec",
 
+  // Making charge: EGP added per gram. Price = (grams x price per gram) + (grams x this value).
+  workmanshipPerGram: { gold: 500, silver: 500 },
+
   // Optional: type a gold price per gram (EGP) to override the automatic one, e.g. { 21: 6300 }.
   // Leave as {} to use the automatic price.
   goldPriceOverride: {},
+  // Same for silver, by purity: e.g. { 925: 95 }. Leave as {} for the automatic price.
+  silverPriceOverride: {},
 
   // Database (Supabase). Project Settings -> API. The publishable/anon key is meant to be public.
   supabaseUrl: "https://qbndjqvtgnkcjlcatgkp.supabase.co",
@@ -24,8 +29,8 @@ window.SITE_CONFIG = {
   email: "info@gamalabohelal.com",
   instagramUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
   facebookUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
-  addressAr: "القاهرة، مصر",
-  addressEn: "Cairo, Egypt",
+  addressAr: "المحلة الكبرى، مصر",
+  addressEn: "El-Mahalla El-Kubra, Egypt",
 
   // Currency label used next to prices.
   currency: { ar: "ج.م", en: "EGP" },

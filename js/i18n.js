@@ -14,32 +14,32 @@
       story: {
         cue: "استمر بالتمرير",
         act1: {
-          eyebrow: "منذ عام ١٩٨٨",
-          title: "جمال أبو هلال للمجوهرات",
-          body: "ورشة عائلية تتوارث صياغة الذهب جيلاً بعد جيل، نصنع كل قطعة بعناية يدوية داخل القاهرة."
+          eyebrow: "منذ ١٩٩٥",
+          title: "جمال أبو هلال",
+          body: "سلسلة محلات وورش ذهب وفضة، متوارثة في العائلة من سنة ١٩٩٥. مقرّنا في المحلة الكبرى، ونخدم السوق المصري كله."
         },
         act2: {
-          eyebrow: "الجودة أولاً",
-          title: "عيار موثّق، وتشطيب لا يخذل التفاصيل",
-          body: "نستخدم ذهب عيار ٢١ و١٨ مدموغ رسميًا، مع فحص لكل حلقة ووصلة قبل أن تصل إلى صندوقها."
+          eyebrow: "ذهب وفضة",
+          title: "السعر حسب سعر الجرام اليوم",
+          body: "ذهب عيار ٢١ و١٨ و٢٤، وفضة ٩٢٥. سعر كل قطعة يُحسب من وزنها وسعر الجرام الحالي مع المصنعية."
         },
         act3: {
-          eyebrow: "جاهزة للإهداء",
-          title: "من الورشة إلى علبتك المخملية",
-          body: "كل قطعة تُغلَّف في علبة العلامة الخاصة بنا وتُسلَّم جاهزة للهدية أو للاحتفاظ بها."
+          eyebrow: "اطلب أونلاين",
+          title: "اختر القطعة وأرسل طلبك",
+          body: "أضف القطعة للسلة واكتب بياناتك، وسنتواصل معك لتأكيد الطلب والتوصيل."
         }
       },
       home: {
         productsEyebrow: "مختارات",
         productsTitle: "من تشكيلتنا",
-        productsBody: "نماذج من القطع المتاحة حاليًا — التشكيلة الكاملة في صفحة المنتجات.",
+        productsBody: "بعض القطع المتاحة حاليًا. باقي التشكيلة في صفحة المنتجات.",
         viewAll: "عرض كل المنتجات"
       },
       products: {
         eyebrow: "التشكيلة",
         title: "كل المنتجات",
-        body: "تصفّح قطعنا من السلاسل والأساور، وأضف ما يعجبك إلى سلتك مباشرة.",
-        filters: { all: "الكل", necklace: "سلاسل", bracelet: "أساور", box: "أطقم هدايا" },
+        body: "مجوهرات ذهب وفضة. أضف ما يعجبك إلى السلة مباشرة.",
+        filters: { all: "الكل", gold: "ذهب", silver: "فضة", necklace: "سلاسل", bracelet: "أساور", box: "أطقم هدايا" },
         addToCart: "أضف للسلة",
         added: "أُضيفت ✓"
       },
@@ -78,7 +78,7 @@
         address: "الموقع"
       },
       footer: {
-        about: "جمال أبو هلال للمجوهرات — ورشة صياغة ذهب عائلية في القاهرة، متخصصة في القطع الكلاسيكية المصنوعة يدويًا.",
+        about: "جمال أبو هلال — سلسلة محلات وورش ذهب وفضة، متوارثة في العائلة من سنة ١٩٩٥ في المحلة الكبرى.",
         explore: "تصفّح",
         support: "الدعم",
         rights: "جميع الحقوق محفوظة"
@@ -92,32 +92,32 @@
       story: {
         cue: "Keep scrolling",
         act1: {
-          eyebrow: "Since 1988",
-          title: "Gamal Abo Hel'al Jewelry",
-          body: "A family gold workshop passed down through generations. Every piece is finished by hand in our Cairo atelier."
+          eyebrow: "Since 1995",
+          title: "Gamal Abo Hel'al",
+          body: "A family chain of gold and silver shops and workshops since 1995. Based in El-Mahalla El-Kubra, serving the whole Egyptian market."
         },
         act2: {
-          eyebrow: "Quality first",
-          title: "Certified karat, finished down to the last link",
-          body: "We work in hallmarked 21k and 18k gold, inspecting every link and clasp before it ever reaches its box."
+          eyebrow: "Gold & silver",
+          title: "Priced by today's gram rate",
+          body: "21k, 18k and 24k gold, and 925 silver. Each piece is priced from its weight, the current gram price and the making charge."
         },
         act3: {
-          eyebrow: "Ready to gift",
-          title: "From the workshop to your velvet box",
-          body: "Every order is wrapped in our signature packaging, ready to give or to keep."
+          eyebrow: "Order online",
+          title: "Pick a piece, send your order",
+          body: "Add it to your cart and enter your details. We'll contact you to confirm the order and delivery."
         }
       },
       home: {
         productsEyebrow: "Selected",
         productsTitle: "From our collection",
-        productsBody: "A few pieces available right now — see the full range on the products page.",
+        productsBody: "A few pieces available now. The rest is on the products page.",
         viewAll: "View all products"
       },
       products: {
         eyebrow: "Collection",
         title: "All products",
-        body: "Browse our necklaces and bracelets, and add anything you like straight to your cart.",
-        filters: { all: "All", necklace: "Necklaces", bracelet: "Bracelets", box: "Gift sets" },
+        body: "Gold and silver jewelry. Add anything you like straight to your cart.",
+        filters: { all: "All", gold: "Gold", silver: "Silver", necklace: "Necklaces", bracelet: "Bracelets", box: "Gift sets" },
         addToCart: "Add to cart",
         added: "Added ✓"
       },
@@ -156,7 +156,7 @@
         address: "Location"
       },
       footer: {
-        about: "Gamal Abo Hel'al Jewelry — a family gold workshop in Cairo, specialising in handmade classic pieces.",
+        about: "Gamal Abo Hel'al — a family chain of gold and silver shops and workshops in El-Mahalla El-Kubra, since 1995.",
         explore: "Explore",
         support: "Support",
         rights: "All rights reserved"

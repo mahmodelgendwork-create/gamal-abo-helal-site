@@ -33,7 +33,10 @@ apps-script/Code.gs      Google Apps Script — receives orders and writes them 
   photo (gallery), one at a time, plus tiny 120px thumbnails.
 - **Database:** `database/schema.sql` (fresh install). Already installed? Run `database/upgrade_multi_images.sql` once in the
   Supabase SQL Editor to enable several photos (keeps existing products).
-- **Price** = `gms × gold price per gram (for the karat) + constant`, computed in the browser from `data/gold.json`.
+- **Price** = `(gms × price per gram) + (gms × 500 EGP)`, computed in the browser from `data/gold.json`. The 500 is `workmanshipPerGram` in `js/config.js`.
+- **Gold and silver:** in the admin form choose the material. Gold = 18/21/24k, silver = 800/925/999. The silver gram price is updated automatically together with gold (`data/gold.json` → `silver`). Override with `silverPriceOverride` in `js/config.js`.
+- **Products page background video:** put your file at `assets/video/productBG.mp4`. It plays slowed (0.5×) at low opacity. Speed is set in `products.html`, opacity in `css/styles.css` (`.page-bg video`).
+- **Already installed database?** Run `database/upgrade_silver_and_price.sql` once in the Supabase SQL Editor (after `upgrade_multi_images.sql`).
 - **Gold price:** `.github/workflows/update-gold.yml` refreshes `data/gold.json` every 30 minutes (no secrets needed;
   needs Settings → Actions → General → Workflow permissions = Read and write). To force a price, set `goldPriceOverride` in `js/config.js`.
 

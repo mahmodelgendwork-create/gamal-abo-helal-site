@@ -16,8 +16,8 @@ window.SITE_CONFIG = {
   email: "info@gamalabohelal.com",
   instagramUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
   facebookUrl: "https://www.facebook.com/share/1Bom8QMPcf/",
-  addressAr: "القاهرة، مصر",
-  addressEn: "Cairo, Egypt",
+  addressAr: "المحلة الكبرى، مصر",
+  addressEn: "El-Mahalla El-Kubra, Egypt",
 
   // Currency label used next to prices.
   currency: { ar: "ج.م", en: "EGP" },

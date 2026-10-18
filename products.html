@@ -4,11 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>المنتجات | Gamal Abo Hel'al Jewelry</title>
-<meta name="description" content="تصفّح تشكيلة جمال أبو هلال من السلاسل والأساور الذهبية.">
+<meta name="description" content="مجوهرات ذهب وفضة من جمال أبو هلال، المحلة الكبرى.">
 <link rel="icon" href="assets/img/logo.png">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body data-page="products">
+
+  <!-- Background video: put your file at assets/video/productBG.mp4 (plays slowed, low opacity) -->
+  <div class="page-bg" aria-hidden="true">
+    <video id="product-bg" muted loop autoplay playsinline preload="auto" disablepictureinpicture
+           onerror="this.style.display='none'">
+      <source src="assets/video/productBG.mp4" type="video/mp4">
+    </video>
+  </div>
 
   <div id="app-topbar"></div>
 
@@ -40,5 +48,17 @@
   <script src="js/cart.js"></script>
   <script src="js/main.js"></script>
   <script src="js/nav.js"></script>
+  <script>
+    // Slow the background video down (0.5 = half speed). Change the number to taste.
+    (function () {
+      var v = document.getElementById("product-bg");
+      if (!v) return;
+      var slow = function () { v.defaultPlaybackRate = 0.5; v.playbackRate = 0.5; };
+      slow();
+      v.addEventListener("loadedmetadata", slow);
+      v.addEventListener("play", slow);
+      var p = v.play(); if (p && p.catch) p.catch(function () {});
+    })();
+  </script>
 </body>
 </html>

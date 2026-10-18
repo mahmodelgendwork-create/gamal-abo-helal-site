@@ -4,7 +4,8 @@
 -- It is safe to run again (uses "if not exists" / "or replace").
 --
 -- Price rule (computed inside the database, always fresh):
---     price = gms * (today's gold price per gram for the product's karat) + constant_egp
+--     price = (gms x price per gram) + (gms x 500 EGP)      -- gold and silver
+-- (silver purity 800/925/999 is stored in the "karat" column; see products.metal)
 -- =====================================================================
 
 create extension if not exists pgcrypto with schema extensions;
@@ -47,7 +48,8 @@ create table if not exists public.gold_prices (
 );
 
 insert into public.gold_prices (karat, price_per_gram, source) values
-  (24, 0, 'initial'), (21, 0, 'initial'), (18, 0, 'initial')
+  (24, 0, 'initial'), (21, 0, 'initial'), (18, 0, 'initial'),
+  (999, 0, 'initial'), (925, 0, 'initial'), (800, 0, 'initial')
 on conflict (karat) do nothing;
 
 -- single-row settings: auto_update=false freezes the automatic updater
@@ -72,13 +74,16 @@ create table if not exists public.products (
   name_en      text not null default '',
   desc_ar      text not null default '',
   desc_en      text not null default '',
-  karat        int  not null check (karat in (18, 21, 24)),
+  metal        text not null default 'gold' check (metal in ('gold','silver')),
+  karat        int  not null,
   gms          numeric(10,2) not null check (gms > 0),
   constant_egp numeric(12,2) not null default 0,
   image_url    text not null default '',          -- cover photo (= first of images)
   images       jsonb not null default '[]'::jsonb, -- list of photo links (first = cover)
   active       boolean not null default true,
-  created_at   timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  constraint products_karat_check check (
+    (metal = 'gold' and karat in (18, 21, 24)) or (metal = 'silver' and karat in (800, 925, 999)))
 );
 create index if not exists products_category_idx on public.products(category_id);
 
@@ -90,9 +95,10 @@ select
   p.name_ar, p.name_en, p.desc_ar, p.desc_en,
   p.karat, p.gms, p.constant_egp, p.image_url, p.created_at,
   case when g.price_per_gram > 0
-       then round(p.gms * g.price_per_gram + p.constant_egp)
+       then round(p.gms * g.price_per_gram + p.gms * 500)
   end as price,
-  p.images
+  p.images,
+  p.metal
 from public.products p
 join public.categories c on c.id = p.category_id and c.active
 left join public.gold_prices g on g.karat = p.karat
@@ -157,7 +163,7 @@ begin
     select jsonb_agg(to_jsonb(x) order by x.created_at desc) from (
       select p.*, c.slug as category,
              case when g.price_per_gram > 0
-                  then round(p.gms * g.price_per_gram + p.constant_egp) end as price
+                  then round(p.gms * g.price_per_gram + p.gms * 500) end as price
       from products p
       join categories c on c.id = p.category_id
       left join gold_prices g on g.karat = p.karat
@@ -168,29 +174,28 @@ end $$;
 -- Create (no "id" in p) or update (with "id") a product
 create or replace function public.admin_save_product(p_name text, p_password text, p jsonb)
 returns uuid language plpgsql security definer set search_path = public, extensions as $$
-declare cid int; pid uuid;
+declare cid int; pid uuid; m text;
 begin
   if not _admin_ok(p_name, p_password) then raise exception 'unauthorized'; end if;
   select id into cid from categories where slug = p->>'category';
   if cid is null then raise exception 'unknown category'; end if;
+  m := case when p->>'metal' = 'silver' then 'silver' else 'gold' end;
 
   if nullif(p->>'id','') is null then
-    insert into products (category_id, name_ar, name_en, desc_ar, desc_en,
+    insert into products (category_id, metal, name_ar, name_en, desc_ar, desc_en,
                           karat, gms, constant_egp, image_url, images, active)
-    values (cid, p->>'name_ar', coalesce(p->>'name_en',''),
+    values (cid, m, p->>'name_ar', coalesce(p->>'name_en',''),
             coalesce(p->>'desc_ar',''), coalesce(p->>'desc_en',''),
-            (p->>'karat')::int, (p->>'gms')::numeric,
-            coalesce(nullif(p->>'constant_egp','')::numeric, 0),
+            (p->>'karat')::int, (p->>'gms')::numeric, 0,
             coalesce(p->'images'->>0, p->>'image_url', ''), coalesce(p->'images', '[]'::jsonb),
             coalesce((p->>'active')::boolean, true))
     returning id into pid;
   else
     update products set
-      category_id = cid,
+      category_id = cid, metal = m,
       name_ar = p->>'name_ar', name_en = coalesce(p->>'name_en',''),
       desc_ar = coalesce(p->>'desc_ar',''), desc_en = coalesce(p->>'desc_en',''),
-      karat = (p->>'karat')::int, gms = (p->>'gms')::numeric,
-      constant_egp = coalesce(nullif(p->>'constant_egp','')::numeric, 0),
+      karat = (p->>'karat')::int, gms = (p->>'gms')::numeric, constant_egp = 0,
       image_url = coalesce(p->'images'->>0, p->>'image_url', ''),
       images = coalesce(p->'images', '[]'::jsonb),
       active = coalesce((p->>'active')::boolean, true)

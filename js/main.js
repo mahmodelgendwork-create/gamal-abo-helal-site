@@ -131,7 +131,10 @@
 
     function paint() {
       paintChips();
-      const list = window.PRODUCTS.filter((p) => activeFilter === "all" || p.category === activeFilter);
+      const list = window.PRODUCTS.filter((p) =>
+        activeFilter === "all" ? true :
+        activeFilter.indexOf("metal:") === 0 ? p.metal === activeFilter.slice(6) :
+        p.category === activeFilter);
       mount.innerHTML = list.map(productCard).join("") || emptyMsg();
       labelAddButtons(mount);
       initCarousels(mount);
@@ -143,9 +146,16 @@
       if (!row) return;
       const used = new Set(window.PRODUCTS.map((p) => p.category));
       const cats = window.CATEGORIES.filter((c) => used.has(c.slug));
-      const allLabel = window.I18N.get(window.I18N.dict[lang()], "products.filters.all");
+      const f = window.I18N.dict[lang()].products.filters;
+      // gold / silver chips appear only once there is at least one silver product
+      const hasSilver = window.PRODUCTS.some((p) => p.metal === "silver");
+      const hasGold = window.PRODUCTS.some((p) => p.metal !== "silver");
+      const metalChips = hasSilver && hasGold
+        ? [["metal:gold", f.gold], ["metal:silver", f.silver]]
+            .map(([k, label]) => `<button class="chip ${activeFilter === k ? "is-active" : ""}" data-filter="${k}">${label}</button>`).join("")
+        : "";
       row.innerHTML =
-        `<button class="chip ${activeFilter === "all" ? "is-active" : ""}" data-filter="all">${allLabel}</button>` +
+        `<button class="chip ${activeFilter === "all" ? "is-active" : ""}" data-filter="all">${f.all}</button>` + metalChips +
         cats.map((c) => `<button class="chip ${activeFilter === c.slug ? "is-active" : ""}" data-filter="${c.slug}">${c.name[lang()]}</button>`).join("");
       row.querySelectorAll(".chip").forEach((chip) => {
         chip.addEventListener("click", () => {

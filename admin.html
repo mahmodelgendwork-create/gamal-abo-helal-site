@@ -19,8 +19,9 @@
   textarea{ min-height:64px; resize:vertical; }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; } .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 14px; }
   @media(max-width:640px){ .grid,.grid3{ grid-template-columns:1fr; } }
-  button{ cursor:pointer; padding:10px 18px; border:1px solid var(--accent); background:var(--accent); color:var(--ink); font:inherit; font-weight:700; }
-  button.ghost{ background:transparent; color:var(--accent); } button.danger{ background:transparent; border-color:var(--bad); color:var(--bad); }
+  button{ cursor:pointer; padding:10px 22px; border:1px solid transparent; border-radius:999px; background:linear-gradient(135deg,#ffe3a3,#f7b955); color:#2a1700; font:inherit; font-weight:700; transition:filter .2s, transform .15s; }
+  button:hover:not(:disabled){ filter:brightness(1.07); transform:translateY(-1px); }
+  button.ghost{ background:transparent; border-color:var(--accent); color:var(--accent); } button.danger{ background:transparent; border-color:var(--bad); color:var(--bad); }
   button:disabled{ opacity:.5; cursor:wait; }
   .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
   .msg{ margin-top:10px; font-size:14px; min-height:20px; } .msg.err{ color:var(--bad); } .msg.ok{ color:var(--ok); }
@@ -53,7 +54,7 @@
   <!-- APP -->
   <div id="app" class="hidden">
     <div class="top">
-      <div><h1>لوحة المنتجات</h1><div class="sub">السعر = الجرامات × سعر جرام الذهب (حسب العيار) + الثابت</div></div>
+      <div><h1>لوحة المنتجات</h1><div class="sub">السعر = (الجرامات × سعر الجرام) + (الجرامات × 500 جنيه)</div></div>
       <button class="ghost" id="logout">خروج</button>
     </div>
 
@@ -61,6 +62,8 @@
     <div class="box">
       <h2>سعر الذهب اليوم (جنيه / جرام)</h2>
       <div class="gold" id="gold"></div>
+      <h2 style="margin-top:16px;">سعر الفضة اليوم (جنيه / جرام)</h2>
+      <div class="gold" id="silver"></div>
       <div class="sub" id="gold-meta" style="margin-top:8px;">يتحدث تلقائيًا كل 30 دقيقة. لتثبيت سعر يدويًا: goldPriceOverride في js/config.js</div>
     </div>
 
@@ -70,13 +73,13 @@
       <input type="hidden" id="f-id">
       <div class="grid">
         <div><label>القسم</label><select id="f-cat"></select></div>
-        <div><label>عيار الذهب</label><select id="f-karat"><option>21</option><option>18</option><option>24</option></select></div>
+        <div><label>الخامة</label><select id="f-metal"><option value="gold">ذهب</option><option value="silver">فضة</option></select></div>
+        <div><label id="f-karat-label">العيار</label><select id="f-karat"></select></div>
         <div><label>الاسم (عربي) *</label><input id="f-name-ar"></div>
         <div><label>Name (English)</label><input id="f-name-en" dir="ltr"></div>
         <div><label>الوصف (عربي)</label><textarea id="f-desc-ar"></textarea></div>
         <div><label>Description (English)</label><textarea id="f-desc-en" dir="ltr"></textarea></div>
         <div><label>الوزن (جرام) *</label><input id="f-gms" type="number" step="0.01" min="0"></div>
-        <div><label>الثابت (جنيه) – مصنعية/ربح</label><input id="f-const" type="number" step="1" min="0" value="0"></div>
       </div>
       <label>روابط الصور (Google Drive – "أي شخص لديه الرابط" عارض) — رابط واحد في كل سطر، والأول هو الصورة الرئيسية</label>
       <textarea id="f-imgs" dir="ltr" style="min-height:96px;" placeholder="https://drive.google.com/file/d/.../view?usp=sharing&#10;https://drive.google.com/file/d/.../view?usp=sharing"></textarea>
@@ -98,7 +101,15 @@ document.write('<script src="js/config.js?v=' + V + '"><\/script><script src="js
 <script>
 (function () {
   const C = window.SITE_CONFIG, $ = (id) => document.getElementById(id);
-  let creds = null, gold = {}, cats = [], products = [];
+  let creds = null, prices = { gold: {}, silver: {} }, cats = [], products = [];
+  const KARATS = { gold: [21, 18, 24], silver: [925, 999, 800] };
+  const metalName = (m) => (m === "silver" ? "فضة" : "ذهب");
+  function fillKarats(selected) {
+    const m = $("f-metal").value;
+    $("f-karat-label").textContent = m === "silver" ? "عيار الفضة" : "عيار الذهب";
+    $("f-karat").innerHTML = KARATS[m].map((k) => `<option value="${k}">${k}</option>`).join("");
+    if (selected) $("f-karat").value = selected;
+  }
 
   function hdr(extra) {
     const h = Object.assign({ apikey: C.supabaseAnonKey }, extra || {});
@@ -144,20 +155,22 @@ document.write('<script src="js/config.js?v=' + V + '"><\/script><script src="js
   async function boot() {
     cats = await rest("categories?select=slug,name_ar&order=sort_order");
     $("f-cat").innerHTML = cats.map((c) => `<option value="${esc(c.slug)}">${esc(c.name_ar)}</option>`).join("");
-    await loadGold(); await loadProducts();
+    fillKarats(); await loadGold(); await loadProducts();
     updatePrice();
   }
 
   /* ---------- gold (read from data/gold.json, same source the website uses) ---------- */
   async function loadGold() {
-    gold = await window.CATALOG.getGold();
-    $("gold").innerHTML = [24, 21, 18].map((k) => `<div>عيار ${k}<b>${gold[k] ? fmt(gold[k]) : "—"}</b></div>`).join("");
+    prices = await window.CATALOG.getPrices();
+    $("gold").innerHTML = [24, 21, 18].map((k) => `<div>عيار ${k}<b>${prices.gold[k] ? fmt(prices.gold[k]) : "—"}</b></div>`).join("");
+    $("silver").innerHTML = [999, 925, 800].map((k) => `<div>عيار ${k}<b>${prices.silver[k] ? fmt(prices.silver[k]) : "—"}</b></div>`).join("");
   }
 
   /* ---------- products ---------- */
-  const priceOf = (karat, gms, c) => gold[karat] > 0 && gms > 0 ? Math.round(gms * gold[karat] + (+c || 0)) : null;
+  // same formula as the website: (grams x gram price) + (grams x 500)
+  const priceOf = (metal, karat, gms) => window.CATALOG.priceOf(metal, karat, gms, prices);
   function updatePrice() {
-    const p = priceOf(+$("f-karat").value, +$("f-gms").value, $("f-const").value);
+    const p = priceOf($("f-metal").value, +$("f-karat").value, +$("f-gms").value);
     $("f-price").textContent = p == null ? "—" : fmt(p) + " ج.م";
     paintThumbs();
   }
@@ -168,13 +181,14 @@ document.write('<script src="js/config.js?v=' + V + '"><\/script><script src="js
       return `<div class="th">${i === 0 ? "<i>رئيسية</i>" : ""}<img src="${esc(ph.thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=bad>الصورة لا تظهر — تأكد من المشاركة</div>'"></div>`;
     }).join("");
   }
-  ["f-karat", "f-gms", "f-const"].forEach((id) => ($(id).oninput = updatePrice));
+  ["f-karat", "f-gms"].forEach((id) => ($(id).oninput = updatePrice));
+  $("f-metal").onchange = () => { fillKarats(); updatePrice(); };
   let tmr; $("f-imgs").oninput = () => { clearTimeout(tmr); tmr = setTimeout(paintThumbs, 400); };
 
   function resetForm() {
     $("f-id").value = ""; $("form-title").textContent = "إضافة منتج";
     ["f-name-ar", "f-name-en", "f-desc-ar", "f-desc-en", "f-gms", "f-imgs"].forEach((id) => ($(id).value = ""));
-    $("f-const").value = 0; $("f-active").checked = true; updatePrice();
+    $("f-metal").value = "gold"; fillKarats(); $("f-active").checked = true; updatePrice();
   }
   $("f-reset").onclick = () => { resetForm(); say("f-msg", ""); };
 
@@ -185,8 +199,8 @@ document.write('<script src="js/config.js?v=' + V + '"><\/script><script src="js
     $("f-save").disabled = true;
     try {
       await rpc("admin_save_product", { ...auth(), p: {
-        id: $("f-id").value || null, category: $("f-cat").value, karat: +$("f-karat").value, gms,
-        constant_egp: +$("f-const").value || 0, name_ar: nameAr, name_en: $("f-name-en").value.trim(),
+        id: $("f-id").value || null, category: $("f-cat").value, metal: $("f-metal").value, karat: +$("f-karat").value, gms,
+        constant_egp: 0, name_ar: nameAr, name_en: $("f-name-en").value.trim(),
         desc_ar: $("f-desc-ar").value.trim(), desc_en: $("f-desc-en").value.trim(),
         images: links(), active: $("f-active").checked } });
       say("f-msg", "تم الحفظ ✓", "ok"); resetForm(); await loadProducts();
@@ -203,7 +217,7 @@ document.write('<script src="js/config.js?v=' + V + '"><\/script><script src="js
       <div class="item">
         <img src="${esc(window.CATALOG.photo(coverOf(p)).thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
         <div class="info"><div class="t">${esc(p.name_ar)}${p.active ? "" : '<span class="tag off">مخفي</span>'}${Array.isArray(p.images) && p.images.length > 1 ? `<span class="tag">${p.images.length} صور</span>` : ""}</div>
-          <div class="m">${esc(catName[p.category] || p.category)} · عيار ${p.karat} · ${fmt(p.gms)} جم · ثابت ${fmt(p.constant_egp)} · <b>${p.price == null ? "—" : fmt(p.price) + " ج.م"}</b></div></div>
+          <div class="m">${esc(catName[p.category] || p.category)} · ${metalName(p.metal)} عيار ${p.karat} · ${fmt(p.gms)} جم · <b>${(() => { const v = priceOf(p.metal || "gold", Number(p.karat), Number(p.gms)); return v == null ? "—" : fmt(v) + " ج.م"; })()}</b></div></div>
         <button class="ghost" data-edit="${p.id}">تعديل</button>
         <button class="danger" data-del="${p.id}">حذف</button>
       </div>`).join("") || '<div class="sub">لا توجد منتجات بعد.</div>';
@@ -213,8 +227,8 @@ document.write('<script src="js/config.js?v=' + V + '"><\/script><script src="js
     if (ed) {
       const p = products.find((x) => x.id === ed);
       $("f-id").value = p.id; $("form-title").textContent = "تعديل منتج";
-      $("f-cat").value = p.category; $("f-karat").value = p.karat; $("f-name-ar").value = p.name_ar; $("f-name-en").value = p.name_en;
-      $("f-desc-ar").value = p.desc_ar; $("f-desc-en").value = p.desc_en; $("f-gms").value = p.gms; $("f-const").value = p.constant_egp;
+      $("f-cat").value = p.category; $("f-metal").value = p.metal === "silver" ? "silver" : "gold"; fillKarats(p.karat); $("f-name-ar").value = p.name_ar; $("f-name-en").value = p.name_en;
+      $("f-desc-ar").value = p.desc_ar; $("f-desc-en").value = p.desc_en; $("f-gms").value = p.gms;
       $("f-imgs").value = (Array.isArray(p.images) && p.images.length ? p.images : p.image_url ? [p.image_url] : []).join("\n"); $("f-active").checked = p.active; updatePrice(); scrollTo({ top: 0, behavior: "smooth" });
     } else if (del && confirm("حذف هذا المنتج نهائيًا؟")) {
       try { await rpc("admin_delete_product", { ...auth(), p_id: del }); await loadProducts(); } catch (er) { alert(er.message); }
