@@ -129,6 +129,19 @@
     if (!mount) return;
     let activeFilter = "all";
 
+    // products.html?p=<id> (from the chatbot): scroll to that product and highlight it once
+    let pinned = false;
+    function pinFromUrl() {
+      if (pinned || !window.PRODUCTS.length) return;
+      const id = new URLSearchParams(location.search).get("p");
+      pinned = true;
+      const card = id && mount.querySelector('[data-product="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (!card) return;
+      card.classList.add("is-pinned");
+      setTimeout(() => card.scrollIntoView({ block: "center", behavior: "smooth" }), 250);
+      setTimeout(() => card.classList.remove("is-pinned"), 6000);
+    }
+
     function paint() {
       paintChips();
       const list = window.PRODUCTS.filter((p) =>
@@ -138,6 +151,7 @@
       mount.innerHTML = list.map(productCard).join("") || emptyMsg();
       labelAddButtons(mount);
       initCarousels(mount);
+      pinFromUrl();
     }
 
     // Filter chips are built from the categories that actually have products.

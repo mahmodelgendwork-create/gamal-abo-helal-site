@@ -1,0 +1,7 @@
+# Minimal Supabase CLI config — only needed to deploy the chatbot function.
+project_id = "gamal-abo-helal"
+
+[functions.chat]
+# The website calls this function with no user login, so the platform JWT check is off.
+# The function protects itself (allowed origins, validation, rate limits, daily cap).
+verify_jwt = false

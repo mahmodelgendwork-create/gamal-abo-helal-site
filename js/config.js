@@ -21,6 +21,10 @@ window.SITE_CONFIG = {
   supabaseUrl: "https://qbndjqvtgnkcjlcatgkp.supabase.co",
   supabaseAnonKey: "sb_publishable_tJF8wLLtgU4kmTTPJjflSA_K5rmlSnr",
 
+  // Chatbot backend (Supabase Edge Function "chat"). No secrets here — the Gemini key lives on the server.
+  // Leave as is if you deploy the function in the same Supabase project (see CHATBOT.md).
+  chatApiUrl: "https://qbndjqvtgnkcjlcatgkp.supabase.co/functions/v1/chat",
+
   // WhatsApp number in international format, digits only (no +, spaces or dashes).
   whatsappNumber: "201114547766",
 

@@ -1,7 +1,7 @@
 /**
  * PRODUCT CATALOG (from the Supabase database)
  * ---------------------------------------------
- * Products + categories come from Supabase (add/edit them in /admin.html).
+ * Products + categories come from Supabase (add/edit them on the private admin page).
  * Price is computed here:  price = (gms x price per gram) + (gms x 500 EGP making charge)
  * Works for gold (18/21/24k) and silver (800/925/999). Silver gram price is automatic, like gold.
  * Prices: data/gold.json (refreshed automatically by GitHub Actions), with a live fallback.

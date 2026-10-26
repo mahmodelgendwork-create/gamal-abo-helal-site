@@ -26,7 +26,7 @@ apps-script/Code.gs      Google Apps Script — receives orders and writes them 
 
 ## 0. Products (Supabase + admin page) and automatic prices
 
-- Products and categories live in Supabase. Add / edit / hide / delete them at **`/admin.html`** (name + password).
+- Products and categories live in Supabase. Add / edit / hide / delete them on the private admin page (name + password). Its address is a long random file name in the project root (`gh-….html`) and is deliberately **not written anywhere in this repo or site** — keep it to yourself, and never link to it.
 - **Several photos per product:** in the admin form, paste one Google Drive link per line (first = cover photo).
   Each Drive file must be shared as *Anyone with the link → Viewer*.
   Speed: the grid loads only the cover photo (resized by Drive to ~480px); the others load only when a visitor taps the
@@ -39,6 +39,9 @@ apps-script/Code.gs      Google Apps Script — receives orders and writes them 
 - **Already installed database?** Run `database/upgrade_silver_and_price.sql` once in the Supabase SQL Editor (after `upgrade_multi_images.sql`).
 - **Gold price:** `.github/workflows/update-gold.yml` refreshes `data/gold.json` every 30 minutes (no secrets needed;
   needs Settings → Actions → General → Workflow permissions = Read and write). To force a price, set `goldPriceOverride` in `js/config.js`.
+
+## Chatbot
+A Gemini-powered sales assistant is built in (floating button on every page). Setup, environment variables, testing and limits are in **`CHATBOT.md`**.
 
 ## 1. Try it locally first
 
