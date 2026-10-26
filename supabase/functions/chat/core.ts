@@ -588,21 +588,31 @@ type GeminiResult =
   | { kind: "quota" | "unavailable" | "blocked" | "error" | "empty" };
 
 async function callGemini(ctx: Ctx, model: string, key: string, system: string, contents: unknown[]): Promise<GeminiResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const base = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const payload = JSON.stringify({
+    systemInstruction: { parts: [{ text: system }] },
+    contents,
+    generationConfig: { temperature: 0.4, topP: 0.9, maxOutputTokens: num(ctx.env, "MAX_OUTPUT_TOKENS", 700) },
+  });
+  // Google accepts the key either in a header or as ?key=. Try the header first; if Google rejects it
+  // (some key types only work as ?key=), retry once with the URL parameter.
+  const call = (viaQuery: boolean) => fetchJson(ctx.f, viaQuery ? `${base}?key=${encodeURIComponent(key)}` : base, {
+    method: "POST",
+    headers: viaQuery ? { "content-type": "application/json" } : { "content-type": "application/json", "x-goog-api-key": key },
+    body: payload,
+  }, 20000);
   try {
-    const r = await fetchJson(ctx.f, url, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents,
-        generationConfig: { temperature: 0.4, topP: 0.9, maxOutputTokens: num(ctx.env, "MAX_OUTPUT_TOKENS", 700) },
-      }),
-    }, 20000);
+    let r = await call(false);
+    if (!r.ok && [400, 401, 403].includes(r.status)) {
+      const r2 = await call(true);
+      if (r2.ok) r = r2;
+    }
     if (r.status === 429) return { kind: "quota" };
     if (r.status === 404 || r.status >= 500) return { kind: "unavailable" };
     if (!r.ok) {
-      console.error("gemini_http_" + r.status);
+      // Google's error reason only (never customer text or the key) so problems can be diagnosed in the logs
+      const e = (r.json && r.json.error) || {};
+      console.error(`gemini_http_${r.status} ${String(e.status || "")} ${String(e.message || "").slice(0, 160)}`);
       return { kind: "error" };
     }
     const j = r.json || {};
@@ -610,7 +620,7 @@ async function callGemini(ctx: Ctx, model: string, key: string, system: string, 
     const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
     const text = parts.filter((p: any) => !p.thought && typeof p.text === "string").map((p: any) => p.text).join("").trim();
     return text ? { kind: "ok", text } : { kind: "empty" };
-  } catch (e) {
+  } catch {
     console.error("gemini_fetch_failed");
     return { kind: "unavailable" };
   }
