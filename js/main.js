@@ -29,13 +29,14 @@
     return `${n.toLocaleString(lang() === "ar" ? "ar-EG" : "en-US")} ${cur}`;
   }
 
+  const esc = (x) => window.CATALOG.esc(x);
   function productCard(p) {
     const l = lang();
     return `
-      <article class="product-card" data-product="${p.id}" data-category="${p.category}">
-        <div class="product-media" data-gallery="${p.id}">
+      <article class="product-card" data-product="${esc(p.id)}" data-category="${esc(p.category)}">
+        <div class="product-media" data-gallery="${esc(p.id)}">
           <div class="slides" data-slides>
-            ${p.photos.map((ph, i) => `<div class="slide"><img alt="${p.name[l]}" width="480" height="520" referrerpolicy="no-referrer" decoding="async" ${i === 0 ? `src="${p.image}" loading="lazy"` : `data-src="${ph.small}"`} onerror="CATALOG.imgFallback(this)" onload="this.classList.add('is-in')"></div>`).join("")}
+            ${p.photos.map((ph, i) => `<div class="slide"><img data-fb alt="${esc(p.name[l])}" width="480" height="520" referrerpolicy="no-referrer" decoding="async" ${i === 0 ? `src="${esc(p.image)}" loading="lazy"` : `data-src="${esc(ph.small)}"`}></div>`).join("")}
           </div>
           ${p.photos.length > 1 ? `
             <button class="m-arrow m-prev" data-arrow="prev" type="button" aria-label="prev">&#8249;</button>
@@ -43,11 +44,11 @@
             <div class="dots">${p.photos.map((_, i) => `<span class="dot ${i === 0 ? "is-active" : ""}"></span>`).join("")}</div>` : ""}
         </div>
         <div class="product-body">
-          <h3>${p.name[l]}</h3>
-          <p class="product-meta">${p.desc[l]}</p>
+          <h3>${esc(p.name[l])}</h3>
+          <p class="product-meta">${esc(p.desc[l])}</p>
           <div class="product-price">${money(p.price)}</div>
           <div class="product-actions">
-            <button class="btn btn--solid btn--block" data-add-to-cart="${p.id}"></button>
+            <button class="btn btn--solid btn--block" data-add-to-cart="${esc(p.id)}"></button>
           </div>
         </div>
       </article>`;
@@ -166,11 +167,11 @@
       const hasGold = window.PRODUCTS.some((p) => p.metal !== "silver");
       const metalChips = hasSilver && hasGold
         ? [["metal:gold", f.gold], ["metal:silver", f.silver]]
-            .map(([k, label]) => `<button class="chip ${activeFilter === k ? "is-active" : ""}" data-filter="${k}">${label}</button>`).join("")
+            .map(([k, label]) => `<button class="chip ${activeFilter === k ? "is-active" : ""}" data-filter="${k}">${esc(label)}</button>`).join("")
         : "";
       row.innerHTML =
         `<button class="chip ${activeFilter === "all" ? "is-active" : ""}" data-filter="all">${f.all}</button>` + metalChips +
-        cats.map((c) => `<button class="chip ${activeFilter === c.slug ? "is-active" : ""}" data-filter="${c.slug}">${c.name[lang()]}</button>`).join("");
+        cats.map((c) => `<button class="chip ${activeFilter === c.slug ? "is-active" : ""}" data-filter="${esc(c.slug)}">${esc(c.name[lang()])}</button>`).join("");
       row.querySelectorAll(".chip").forEach((chip) => {
         chip.addEventListener("click", () => {
           activeFilter = chip.getAttribute("data-filter");

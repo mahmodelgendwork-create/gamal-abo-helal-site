@@ -1,0 +1,15 @@
+{
+  "name": "جمال أبو هلال للمجوهرات",
+  "short_name": "أبو هلال",
+  "description": "ذهب وفضة في المحلة الكبرى منذ ١٩٩٥",
+  "start_url": "/",
+  "display": "standalone",
+  "lang": "ar",
+  "dir": "rtl",
+  "background_color": "#140b11",
+  "theme_color": "#140b11",
+  "icons": [
+    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

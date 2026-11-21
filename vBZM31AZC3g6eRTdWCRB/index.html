@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#140b11">
+<title>Dashboard</title>
+<link rel="icon" href="../assets/img/favicon-32.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=Tajawal:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<main id="login" class="login">
+  <form class="login-card" id="login-form" autocomplete="on" novalidate>
+    <img class="login-logo" src="../assets/img/logo.png" alt="" width="120" height="50">
+    <h1>لوحة الإدارة</h1>
+    <p class="muted">دخول مصرّح به فقط</p>
+
+    <label for="lg-name">اسم المستخدم</label>
+    <input id="lg-name" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+
+    <label for="lg-pass">كلمة المرور</label>
+    <div class="pass-wrap">
+      <input id="lg-pass" name="password" type="password" autocomplete="current-password" required>
+      <button type="button" class="eye" id="lg-eye" aria-label="إظهار / إخفاء كلمة المرور">👁</button>
+    </div>
+
+    <button class="btn" id="lg-btn" type="submit">دخول</button>
+    <div class="msg" id="lg-msg" role="alert"></div>
+    <p class="fine">لحمايتك: بعد ٤ محاولات خاطئة يتوقف الدخول ٣٠ دقيقة.</p>
+  </form>
+</main>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="app hidden">
+  <header class="bar">
+    <div class="bar-id"><img src="../assets/img/logo.png" alt="" width="64" height="27"><span class="bar-title">لوحة الإدارة</span></div>
+    <nav class="tabs" role="tablist">
+      <button class="tab is-active" data-tab="products" role="tab">المنتجات</button>
+      <button class="tab" data-tab="pricing" role="tab">الأسعار والمصنعية</button>
+    </nav>
+    <div class="bar-end"><span class="session" id="session-left"></span><button class="btn btn--ghost btn--sm" id="logout">خروج</button></div>
+  </header>
+
+  <div class="wrap">
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- ---------- PRICING ---------- -->
+    <section id="tab-pricing" class="panel hidden">
+      <div class="card">
+        <h2>المصنعية (الجنيه عن كل جرام)</h2>
+        <p class="muted">السعر النهائي = (الوزن × سعر الجرام اليوم) + (الوزن × المصنعية). التغيير يظهر في الموقع والشات بوت فورًا.</p>
+        <div class="grid2">
+          <div><label for="s-gold">مصنعية الذهب</label><div class="unit"><input id="s-gold" type="number" inputmode="decimal" min="0" max="100000" step="1"><span>ج.م / جرام</span></div></div>
+          <div><label for="s-silver">مصنعية الفضة</label><div class="unit"><input id="s-silver" type="number" inputmode="decimal" min="0" max="100000" step="1"><span>ج.م / جرام</span></div></div>
+        </div>
+        <div class="sample" id="s-sample"></div>
+        <div class="row"><button class="btn" id="s-save">حفظ المصنعية</button></div>
+      </div>
+
+      <div class="card">
+        <h2>سعر الجرام اليوم</h2>
+        <p class="muted" id="gold-meta">بيتحدّث تلقائيًا كل ٣٠ دقيقة.</p>
+        <h3>ذهب</h3><div class="rates" id="gold"></div>
+        <h3>فضة</h3><div class="rates" id="silver"></div>
+      </div>
+    </section>
+
+    <!-- ---------- PRODUCTS ---------- -->
+    <section id="tab-products" class="panel">
+      <div class="card" id="form-card">
+        <div class="card-head"><h2 id="form-title">إضافة منتج</h2><button class="btn btn--ghost btn--sm" id="f-reset" type="button">منتج جديد</button></div>
+        <input type="hidden" id="f-id">
+        <div class="grid2">
+          <div><label for="f-name-ar">الاسم (عربي) *</label><input id="f-name-ar" maxlength="200"></div>
+          <div><label for="f-name-en">Name (English)</label><input id="f-name-en" dir="ltr" maxlength="200"></div>
+          <div><label for="f-cat">القسم</label><select id="f-cat"></select></div>
+          <div><label for="f-gms">الوزن (جرام) *</label><input id="f-gms" type="number" inputmode="decimal" step="0.01" min="0"></div>
+          <div><label for="f-metal">الخامة</label><select id="f-metal"><option value="gold">ذهب</option><option value="silver">فضة</option></select></div>
+          <div><label for="f-karat" id="f-karat-label">العيار</label><select id="f-karat"></select></div>
+          <div><label for="f-desc-ar">الوصف (عربي)</label><textarea id="f-desc-ar" maxlength="2000"></textarea></div>
+          <div><label for="f-desc-en">Description (English)</label><textarea id="f-desc-en" dir="ltr" maxlength="2000"></textarea></div>
+        </div>
+        <label for="f-imgs">روابط الصور (Google Drive – "أي شخص لديه الرابط: عارض") — رابط في كل سطر، والأول هو الصورة الرئيسية</label>
+        <textarea id="f-imgs" dir="ltr" class="tall" placeholder="https://drive.google.com/file/d/.../view?usp=sharing"></textarea>
+        <div class="thumbs" id="f-prevs"></div>
+
+        <div class="price-box"><div><small>السعر المتوقع الآن</small><div class="price" id="f-price">—</div></div>
+          <label class="switch"><input id="f-active" type="checkbox" checked><span></span>ظاهر في الموقع</label></div>
+        <div class="row"><button class="btn" id="f-save" type="button">حفظ المنتج</button></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>المنتجات (<span id="count">0</span>)</h2><input id="q" class="search" type="search" placeholder="بحث بالاسم…"></div>
+        <div id="list"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

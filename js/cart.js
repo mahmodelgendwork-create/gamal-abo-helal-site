@@ -23,6 +23,7 @@
   function findProduct(id) {
     return (window.PRODUCTS || []).find((p) => p.id === id);
   }
+  const esc = (x) => (window.CATALOG && window.CATALOG.esc ? window.CATALOG.esc(x) : String(x));
   function lang() {
     return (window.I18N && window.I18N.currentLang()) || "ar";
   }
@@ -92,7 +93,7 @@
         <div class="cart-empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 7h12l1.2 11.2a1.5 1.5 0 0 1-1.5 1.8H6.3a1.5 1.5 0 0 1-1.5-1.8L6 7Z"/><path d="M9 10V6a3 3 0 1 1 6 0v4"/></svg>
           <div>${t("cart.emptyTitle")}</div>
-          <p style="margin-top:6px;">${t("cart.emptyBody")}</p>
+          <p class="mt6">${t("cart.emptyBody")}</p>
         </div>`;
       foot.innerHTML = `<a class="btn btn--solid btn--block" href="products.html">${t("cart.browse")}</a>`;
       return;
@@ -103,10 +104,10 @@
         const p = findProduct(line.id);
         if (!p) return "";
         return `
-        <div class="cart-line" data-line="${p.id}">
-          <img src="${p.image}" alt="" width="64" height="64" referrerpolicy="no-referrer" ${p.localDefault ? `data-pid="${p.id}"` : ""} onerror="CATALOG.imgFallback(this)">
+        <div class="cart-line" data-line="${esc(p.id)}">
+          <img data-fb src="${esc(p.image)}" alt="" width="64" height="64" referrerpolicy="no-referrer">
           <div class="cart-line-body">
-            <div class="cart-line-title">${p.name[lang()]}</div>
+            <div class="cart-line-title">${esc(p.name[lang()])}</div>
             <div class="cart-line-meta">${money(p.price)}</div>
             <div class="qty-row">
               <button class="qty-btn" data-qty-dec>&minus;</button>
@@ -121,9 +122,9 @@
 
     foot.innerHTML = `
       <div class="summary-row"><span>${t("cart.subtotal")}</span><span>${money(subtotal())}</span></div>
-      <div class="summary-row" style="font-size:12.5px;"><span>${t("cart.shippingNote")}</span><span></span></div>
+      <div class="summary-row small"><span>${t("cart.shippingNote")}</span><span></span></div>
       <div class="summary-row total"><span>${t("cart.total")}</span><span class="amount">${money(subtotal())}</span></div>
-      <button class="btn btn--solid btn--block" data-go-checkout style="margin-top:14px;">${t("cart.checkout")}</button>`;
+      <button class="btn btn--solid btn--block mt14" data-go-checkout>${t("cart.checkout")}</button>`;
 
     body.querySelectorAll("[data-line]").forEach((row) => {
       const id = row.getAttribute("data-line");
@@ -163,6 +164,7 @@
           <label>${t("cart.notes")}</label>
           <textarea name="notes"></textarea>
         </div>
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <div class="form-status" data-form-status></div>
         <button type="submit" class="btn btn--solid btn--block" data-submit-order>${t("cart.confirm")}</button>
         <button type="button" class="btn btn--ghost btn--block" data-back-to-cart>${t("cart.backToCart")}</button>
@@ -180,7 +182,7 @@
       <div class="cart-empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 12.5 9.5 17 19 7.5"/></svg>
         <p>${message}</p>
-        ${isError ? `<a class="btn btn--solid" href="${waHref}" target="_blank" rel="noopener" style="margin-top:10px;">${t("cart.whatsappFallback")}</a>` : ""}
+        ${isError ? `<a class="btn btn--solid" href="${waHref}" target="_blank" rel="noopener noreferrer">${t("cart.whatsappFallback")}</a>` : ""}
       </div>`;
     foot.innerHTML = `<button class="btn btn--ghost btn--block" data-new-order>${t("cart.newOrder")}</button>`;
     foot.querySelector("[data-new-order]").addEventListener("click", () => {
@@ -235,6 +237,7 @@
     const form = e.target;
     const statusEl = form.querySelector("[data-form-status]");
     const submitBtn = form.querySelector("[data-submit-order]");
+    if (form.website && form.website.value) { view = "done"; renderDoneView(t("cart.success")); clearCart(); return; }   // bot trap: real people never see this field
     const payload = buildOrderPayload(form);
     const url = window.SITE_CONFIG.googleSheetWebAppUrl;
 

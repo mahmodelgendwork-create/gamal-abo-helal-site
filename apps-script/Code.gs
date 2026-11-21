@@ -14,22 +14,43 @@
 
 const SHEET_NAME = "Orders"; // change if your sheet tab has a different name
 
+// Anyone on the internet can call this URL, so every value is cleaned and abuse is limited.
+const MAX_BODY = 12000;          // characters
+const MAX_ORDERS_PER_HOUR = 5;   // per phone number
+
+// A cell starting with = + - @ would be run as a spreadsheet formula. Neutralise it, and cap the length.
+function safe_(v, max) {
+  let t = String(v == null ? "" : v).replace(/[\u0000-\u001F]/g, " ").trim().slice(0, max || 300);
+  if (/^[=+\-@]/.test(t)) t = "'" + t;
+  return t;
+}
+
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
+    const raw = (e && e.postData && e.postData.contents) || "";
+    if (raw.length > MAX_BODY) throw new Error("too large");
+    const data = JSON.parse(raw);
+
+    const phone = safe_(data.phone, 30);
+    const cache = CacheService.getScriptCache();
+    const key = "ord_" + phone.replace(/\D/g, "");
+    const n = Number(cache.get(key) || 0);
+    if (n >= MAX_ORDERS_PER_HOUR) throw new Error("rate limited");
+    cache.put(key, String(n + 1), 3600);
+
     const sheet = getSheet_();
 
     const row = [
       new Date(),
-      data.customerName || "",
-      data.phone || "",
-      data.city || "",
-      data.address || "",
-      data.notes || "",
-      formatItems_(data.items),
-      data.itemCount || 0,
-      data.subtotal || 0,
-      data.language || ""
+      safe_(data.customerName, 120),
+      phone,
+      safe_(data.city, 80),
+      safe_(data.address, 400),
+      safe_(data.notes, 600),
+      safe_(formatItems_(data.items), 1500),
+      Number(data.itemCount) || 0,
+      Number(data.subtotal) || 0,
+      safe_(data.language, 5)
     ];
     sheet.appendRow(row);
 
@@ -46,7 +67,8 @@ function doPost(e) {
 function formatItems_(items) {
   if (!items || !items.length) return "";
   return items
-    .map((i) => `${i.qty} x ${i.name} (${i.lineTotal})`)
+    .slice(0, 30)
+    .map((i) => `${Number(i.qty) || 0} x ${String(i.name || "").slice(0, 80)} (${Number(i.lineTotal) || 0})`)
     .join(" | ");
 }
 

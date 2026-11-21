@@ -10,7 +10,7 @@ window.COMPONENTS = {
     return `
       <header class="topbar">
         <a href="index.html" class="brand-mark" aria-label="Gamal Abo Hel'al">
-          <img src="assets/img/logo.png" alt="Gamal Abo Hel'al">
+          <img src="assets/img/logo.png" alt="Gamal Abo Hel'al" width="72" height="30">
         </a>
         <button class="lang-toggle" data-lang-toggle type="button">
           <span data-lang-switch-label>English</span>
@@ -63,13 +63,13 @@ window.COMPONENTS = {
     const phoneIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l1.5 4.5L8 10.5a12 12 0 0 0 5.5 5.5l2-2.5L20 15v4a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 3.5 5.6 1.5 1.5 0 0 1 5 4Z"/></svg>`;
     const mailIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4V6Z"/><path d="m4 7 8 6 8-6"/></svg>`;
     const pinIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.4 7-11.5A7 7 0 0 0 5 9.5C5 14.6 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>`;
-    const igIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.3"/><circle cx="16.2" cy="7.8" r=".6" fill="currentColor" stroke="none"/></svg>`;
+    const fbIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8.5h2.5V5H14a3.5 3.5 0 0 0-3.5 3.5V11H8v3.5h2.5V21H14v-6.5h2.4l.6-3.5H14V8.8c0-.2.1-.3.3-.3Z"/></svg>`;
 
     return `
       <div class="overlay" data-contact-overlay></div>
       <section class="sheet" data-contact-sheet aria-hidden="true">
         <div class="sheet-handle"></div>
-        <h3 data-i18n="contact.title" style="margin-bottom:18px;"></h3>
+        <h3 data-i18n="contact.title" class="sheet-title"></h3>
         <div class="contact-list">
           <a class="contact-row" data-wa-link href="#" target="_blank" rel="noopener">
             ${waIcon}
@@ -77,16 +77,16 @@ window.COMPONENTS = {
           </a>
           <a class="contact-row" data-phone-link href="#">
             ${phoneIcon}
-            <div><div class="t" data-i18n="contact.phone"></div><div class="s">${c.phoneDisplay || ""}</div></div>
+            <div><div class="t" data-i18n="contact.phone"></div><div class="s" dir="ltr">${c.phoneDisplay || ""}</div></div>
           </a>
-          <a class="contact-row" href="mailto:${c.email || ""}">
+          ${c.email ? `<a class="contact-row" href="mailto:${c.email}">
             ${mailIcon}
-            <div><div class="t" data-i18n="contact.email"></div><div class="s">${c.email || ""}</div></div>
-          </a>
-          <a class="contact-row" href="${c.instagramUrl || "#"}" target="_blank" rel="noopener">
-            ${igIcon}
-            <div><div class="t" data-i18n="contact.instagram"></div><div class="s">@gamalabohelal</div></div>
-          </a>
+            <div><div class="t" data-i18n="contact.email"></div><div class="s">${c.email}</div></div>
+          </a>` : ""}
+          ${c.facebookUrl ? `<a class="contact-row" href="${c.facebookUrl}" target="_blank" rel="noopener noreferrer">
+            ${fbIcon}
+            <div><div class="t" data-i18n="contact.facebook"></div><div class="s" data-i18n="contact.facebookSub"></div></div>
+          </a>` : ""}
           <div class="contact-row">
             ${pinIcon}
             <div><div class="t" data-i18n="contact.address"></div><div class="s" data-address></div></div>
@@ -102,8 +102,8 @@ window.COMPONENTS = {
         <div class="container">
           <div class="footer-grid">
             <div>
-              <img src="assets/img/logo.png" alt="Gamal Abo Hel'al" class="footer-logo">
-              <p data-i18n="footer.about" style="max-width:38ch;"></p>
+              <img src="assets/img/logo.png" alt="Gamal Abo Hel'al" class="footer-logo" width="62" height="26" loading="lazy">
+              <p data-i18n="footer.about" class="footer-about"></p>
             </div>
             <div>
               <h4 data-i18n="footer.explore"></h4>
@@ -117,8 +117,9 @@ window.COMPONENTS = {
               <h4 data-i18n="footer.support"></h4>
               <ul class="footer-links">
                 <li><a data-wa-link href="#" target="_blank" rel="noopener" data-i18n="contact.whatsapp"></a></li>
-                <li><a href="mailto:${c.email || ""}">${c.email || ""}</a></li>
-                <li><a href="tel:${(c.phoneDisplay || "").replace(/\s/g, "")}">${c.phoneDisplay || ""}</a></li>
+                ${c.email ? `<li><a href="mailto:${c.email}">${c.email}</a></li>` : ""}
+                <li><a href="tel:${(c.phoneDisplay || "").replace(/\s/g, "")}" dir="ltr">${c.phoneDisplay || ""}</a></li>
+                ${c.facebookUrl ? `<li><a href="${c.facebookUrl}" target="_blank" rel="noopener noreferrer" data-i18n="contact.facebook"></a></li>` : ""}
               </ul>
             </div>
           </div>

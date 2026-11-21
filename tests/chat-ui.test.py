@@ -34,7 +34,9 @@ def setup(ctx, chat_mode="real", capture=None):
         page.route(pat, lambda r: r.abort())
     def rest(route):
         u = route.request.url
-        body = CATS if "/categories" in u else ROWS
+        if "/gold_prices" in u: body = [{"karat":k,"price_per_gram":v,"updated_at":"2099-01-01T00:00:00Z"} for k,v in {24:7000,21:6000,18:5000,999:100,925:90,800:80}.items()]
+        elif "/site_settings" in u: body = [{"workmanship_gold":500,"workmanship_silver":500}]
+        else: body = CATS if "/categories" in u else ROWS
         route.fulfill(status=200, content_type="application/json", body=json.dumps(body))
     page.route(f"https://{SB}/rest/v1/**", rest)
     def chat(route):
@@ -88,9 +90,9 @@ with sync_playwright() as pw:
     check("customer bubble + assistant bubble rendered", page.locator(".gc-msg--user").count() == 1 and page.locator(".gc-msg--bot").count() >= 2)
     check("chips hidden after first message", page.locator(".gc-chip").count() == 0)
     card = page.locator(".gc-card").first; ctext = card.inner_text()
-    check("card shows real product name, category, price", "خاتم سوليتير" in ctext and "خواتم" in ctext and "٣٣٬٤١٢" in ctext, ctext)
+    check("card shows real product name, category, price", "خاتم سوليتير" in ctext and "خواتم" in ctext and "٣٢٬٥٠٠" in ctext, ctext)
     check("card has 'View' link to real product page", (card.locator("a.gc-btn").get_attribute("href") or "").endswith("products.html?p=" + UUID(1)))
-    check("chat text price == card price (no mismatch)", "٣٣٬٤١٢" in page.locator(".gc-msg--bot .gc-bubble").nth(1).inner_text())
+    check("chat text price == card price (no mismatch)", "٣٢٬٥٠٠" in page.locator(".gc-msg--bot .gc-bubble").nth(1).inner_text())
     page.screenshot(path="/tmp/shots/d3_reply.png")
 
     # follow-up sends history + context ids
@@ -157,7 +159,7 @@ with sync_playwright() as pw:
     print("ERROR HANDLING")
     ctx = b.new_context(viewport={"width":1280,"height":800}); page, errors = setup(ctx, chat_mode="503"); ready(page, "/index.html")
     page.locator(".gc-fab").click(); page.fill("#gc-input", "عايز خاتم"); page.keyboard.press("Enter"); page.wait_for_selector(".gc-msg--err", timeout=5000)
-    check("server 'busy' → friendly Arabic message + WhatsApp button", "مشغول" in page.locator(".gc-msg--err").inner_text() and page.locator(".gc-msg--err a[href^='https://wa.me/201114547766']").count() == 1)
+    check("server 'busy' → friendly Arabic message + WhatsApp button", "مشغول" in page.locator(".gc-msg--err").inner_text() and page.locator(".gc-msg--err a[href^='https://wa.me/201065676771']").count() == 1)
     check("input usable again after error", page.locator(".gc-send").is_enabled())
     ctx.close()
     ctx = b.new_context(viewport={"width":1280,"height":800}); page, errors = setup(ctx, chat_mode="abort"); ready(page, "/index.html")

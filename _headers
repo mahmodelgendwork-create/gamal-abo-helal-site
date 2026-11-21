@@ -1,0 +1,20 @@
+# Security + caching headers. Works as-is on Cloudflare Pages (and Netlify). GitHub Pages ignores this file.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self'; connect-src 'self' https://qbndjqvtgnkcjlcatgkp.supabase.co https://script.google.com https://script.googleusercontent.com https://open.er-api.com https://api.gold-api.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+
+/assets/img/*
+  Cache-Control: public, max-age=2592000
+
+/assets/video/*
+  Cache-Control: public, max-age=2592000
+
+# The hidden admin folder: never cached, never indexed.
+/vBZM31AZC3g6eRTdWCRB/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+  Cache-Control: no-store
