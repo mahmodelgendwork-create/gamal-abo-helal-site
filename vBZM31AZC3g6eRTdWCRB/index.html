@@ -19,8 +19,8 @@
 <main id="login" class="login">
   <form class="login-card" id="login-form" autocomplete="on" novalidate>
     <img class="login-logo" src="../assets/img/logo.png" alt="" width="120" height="50">
-    <h1>لوحة الإدارة</h1>
-    <p class="muted">دخول مصرّح به فقط</p>
+    <h1>Admin Login</h1>
+    <p class="muted"></p>
 
     <label for="lg-name">اسم المستخدم</label>
     <input id="lg-name" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required>
@@ -97,7 +97,7 @@
       </div>
 
       <div class="card">
-        <div class="card-head"><h2>المنتجات (<span id="count">0</span>)</h2><input id="q" class="search" type="search" placeholder="بحث بالاسم…"></div>
+        <div class="card-head"><h2>المنتجات (<span id="count">0</span>)</h2><div class="filters"><select id="flt" class="search" aria-label="تصفية"><option value="all">الكل</option><option value="on">ظاهر في الموقع</option><option value="off">مخفي / تم بيعه</option></select><input id="q" class="search" type="search" placeholder="بحث بالاسم…"></div></div>
         <div id="list"></div>
       </div>
     </section>

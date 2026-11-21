@@ -91,3 +91,6 @@ select{ appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='
 @media(max-width:560px){ .item{ flex-wrap:wrap; } .item .btns{ width:100%; } .item .btns .btn{ flex:1; } }
 .toast{ position:fixed; z-index:50; inset-inline:0; top:76px; margin:auto; width:max-content; max-width:92vw; padding:12px 22px; border-radius:999px; font-size:14px; font-weight:700; opacity:0; transform:translateY(-10px); pointer-events:none; transition:all .35s; background:#2f6b43; color:#eafff0; box-shadow:0 14px 30px -12px rgba(0,0,0,.8); }
 .toast.show{ opacity:1; transform:none; } .toast.err{ background:#8a2f3a; color:#ffecec; }
+
+.filters{ display:flex; gap:10px; flex-wrap:wrap; } .filters .search{ max-width:200px; }
+.item.is-off{ opacity:.62; } .btn--sold{ background:rgba(246,207,122,.12); color:var(--gold-hi); border-color:var(--line2); box-shadow:none; }

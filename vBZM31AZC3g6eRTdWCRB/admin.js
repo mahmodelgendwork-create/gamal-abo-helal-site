@@ -198,21 +198,39 @@
   function paintList() {
     var q = $("q").value.trim().toLowerCase(), catName = {};
     cats.forEach(function (c) { catName[c.slug] = c.name_ar; });
-    var list = products.filter(function (p) { return !q || (p.name_ar + " " + (p.name_en || "")).toLowerCase().indexOf(q) > -1; });
+    var flt = $("flt").value;
+    var list = products.filter(function (p) {
+      if (flt === "on" && !p.active) return false;
+      if (flt === "off" && p.active) return false;
+      return !q || (p.name_ar + " " + (p.name_en || "")).toLowerCase().indexOf(q) > -1;
+    });
     $("count").textContent = products.length;
     $("list").innerHTML = list.map(function (p) {
       var cover = (Array.isArray(p.images) && p.images[0]) || p.image_url || "", v = priceOf(p.metal, +p.karat, +p.gms);
-      return '<div class="item"><img data-li src="' + esc(thumb(cover)) + '" alt="" referrerpolicy="no-referrer">' +
-        '<div class="info"><div class="t">' + esc(p.name_ar) + (p.active ? "" : '<span class="tag off">مخفي</span>') + (Array.isArray(p.images) && p.images.length > 1 ? '<span class="tag">' + p.images.length + " صور</span>" : "") + "</div>" +
+      return '<div class="item' + (p.active ? "" : " is-off") + '"><img data-li src="' + esc(thumb(cover)) + '" alt="" referrerpolicy="no-referrer">' +
+        '<div class="info"><div class="t">' + esc(p.name_ar) + (p.active ? "" : '<span class="tag off">مخفي (تم بيعه)</span>') + (Array.isArray(p.images) && p.images.length > 1 ? '<span class="tag">' + p.images.length + " صور</span>" : "") + "</div>" +
         '<div class="m">' + esc(catName[p.category] || p.category) + " · " + metalName(p.metal) + " عيار " + esc(p.karat) + " · " + fmt(p.gms) + " جم · <b>" + (v == null ? "—" : fmt(v) + " ج.م") + "</b></div></div>" +
-        '<div class="btns"><button class="btn btn--ghost btn--sm" data-edit="' + esc(p.id) + '">تعديل</button><button class="btn btn--danger btn--sm" data-del="' + esc(p.id) + '">حذف</button></div></div>';
+        '<div class="btns"><button class="btn btn--sold btn--sm" data-toggle="' + esc(p.id) + '">' + (p.active ? "تم البيع — إخفاء" : "إظهار في الموقع") + '</button><button class="btn btn--ghost btn--sm" data-edit="' + esc(p.id) + '">تعديل</button><button class="btn btn--danger btn--sm" data-del="' + esc(p.id) + '">حذف</button></div></div>';
     }).join("") || '<p class="muted">لا توجد منتجات.</p>';
   }
   $("q").oninput = paintList;
+  $("flt").onchange = paintList;
   $("list").onclick = function (e) {
     var b = e.target.closest("button"); if (!b) return;
-    var ed = b.dataset.edit, del = b.dataset.del;
-    if (ed) {
+    var ed = b.dataset.edit, del = b.dataset.del, tg = b.dataset.toggle;
+    if (tg) {
+      var p0 = products.filter(function (x) { return x.id === tg; })[0]; if (!p0) return;
+      var hide = !!p0.active;
+      if (hide && !confirm("تأكيد: تم بيع هذه القطعة وسيتم إخفاؤها من الموقع؟")) return;
+      b.disabled = true;
+      rpc("admin_save_product", { p_token: token, p: {
+        id: p0.id, category: p0.category, metal: p0.metal, karat: +p0.karat, gms: +p0.gms,
+        name_ar: p0.name_ar, name_en: p0.name_en || "", desc_ar: p0.desc_ar || "", desc_en: p0.desc_en || "",
+        images: Array.isArray(p0.images) && p0.images.length ? p0.images : (p0.image_url ? [p0.image_url] : []),
+        active: !hide } })
+        .then(function () { toast(hide ? "تم إخفاء المنتج من الموقع ✓" : "المنتج ظاهر الآن في الموقع ✓"); return loadProducts(); })
+        .catch(function (er) { toast(er.message, true); b.disabled = false; });
+    } else if (ed) {
       var p = products.filter(function (x) { return x.id === ed; })[0]; if (!p) return;
       $("f-id").value = p.id; $("form-title").textContent = "تعديل منتج";
       $("f-cat").value = p.category; $("f-metal").value = p.metal === "silver" ? "silver" : "gold"; fillKarats(p.karat);
