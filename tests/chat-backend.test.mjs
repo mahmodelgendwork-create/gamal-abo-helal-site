@@ -1,5 +1,5 @@
 // Run:  node --experimental-strip-types tests/chat-backend.test.mjs
-// Simulates Supabase REST (products, gold_prices, site_settings) and Gemini, then exercises the real backend code.
+// Simulates Supabase REST, the website's gold.json and Gemini, then exercises the real backend code.
 import assert from "node:assert/strict";
 import { handleChat, analyse, normAr } from "../supabase/functions/chat/core.ts";
 
@@ -15,7 +15,6 @@ let ROWS = [
   { id: UUID(3), category: "necklace", metal: "gold", karat: 21, gms: 10, name_ar: "سلسلة كابل", name_en: "Cable Chain", desc_ar: "", desc_en: "", image_url: "", images: [], created_at: "2026-10-03" },
   { id: UUID(4), category: "bracelet", metal: "silver", karat: 925, gms: 12, name_ar: "إسورة فضة", name_en: "Silver Bracelet", desc_ar: "", desc_en: "", image_url: "", images: [], created_at: "2026-10-04" },
 ];
-let MAKE = { workmanship_gold: 500, workmanship_silver: 500 };
 let GOLD = { updated: new Date().toISOString(), prices: { 18: 5000, 21: 6000, 24: 7000 }, silver: { 999: 100, 925: 90, 800: 80 } };
 
 const log = { gemini: [], rpc: [], rest: [] };
@@ -27,11 +26,7 @@ const J = (o, status = 200) => new Response(JSON.stringify(o), { status, headers
 
 async function mockFetch(input, init = {}) {
   const url = String(input);
-  if (url.startsWith("https://sb.test/rest/v1/gold_prices")) {
-    const at = new Date(clock).toISOString();
-    return J([...Object.entries(GOLD.prices), ...Object.entries(GOLD.silver)].map(([k, v]) => ({ karat: Number(k), price_per_gram: v, updated_at: at })));
-  }
-  if (url.startsWith("https://sb.test/rest/v1/site_settings")) return J([MAKE]);
+  if (url.startsWith("https://site.test/data/gold.json")) return J(GOLD);
   if (url.startsWith("https://sb.test/rest/v1/categories")) return J(CATS);
   if (url.startsWith("https://sb.test/rest/v1/products_priced")) {
     log.rest.push(url);
@@ -61,7 +56,7 @@ async function mockFetch(input, init = {}) {
 
 const ENV = {
   GEMINI_API_KEY: "SECRET-GEMINI-KEY-123", SUPABASE_URL: "https://sb.test", SB_PUBLISHABLE_KEY: "sb_publishable_x", SB_SECRET_KEY: "sb_secret_y",
-  ALLOWED_ORIGINS: "https://shop.example.com",
+  SITE_BASE_URL: "https://site.test", ALLOWED_ORIGINS: "https://shop.example.com",
 };
 const env = (over = {}) => { const e = { ...ENV, ...over }; return { get: (k) => e[k] }; };
 const post = (body, headers = {}) => new Request("https://sb.test/functions/v1/chat", {
@@ -96,7 +91,7 @@ await t("'how do I order' triggers no product search", async () => {
 });
 
 console.log("Live data & prices");
-await t("price = grams x gram price + grams x 500, from the database gold_prices", async () => {
+await t("price = grams x gram price + grams x 500, from live gold.json", async () => {
   const r = await call({ message: "عايز خاتم ذهب عيار 21" }); const j = await r.json();
   assert.equal(r.status, 200); assert.equal(j.ok, true);
   assert.equal(j.products[0].id, UUID(1));
@@ -111,15 +106,6 @@ await t("changing the gram price changes the answer with no code/knowledge-file 
   assert.equal(before.products[0].price, 32500);                    // 5 g x 6000 + 5 g x 500
   assert.equal(after.products[0].price, 37500);                     // 5 g x 7000 + 5 g x 500 — new gram price, same code
   assert.ok(log.gemini[0].system.includes("32,500") && log.gemini[1].system.includes("37,500"));   // English chat → English number format
-});
-await t("editing the making charge in the admin changes the bot's prices (no code change)", async () => {
-  MAKE = { workmanship_gold: 650, workmanship_silver: 120 };
-  const g = await (await call({ message: "عايز خاتم ذهب عيار 21" })).json();
-  const sv = await (await call({ message: "عايز اسورة فضة" })).json();
-  MAKE = { workmanship_gold: 500, workmanship_silver: 500 };
-  assert.equal(g.products[0].price, 5 * 6000 + 5 * 650);        // 33,250
-  assert.equal(sv.products[0].price, 12 * 90 + 12 * 120);       // silver uses its own charge
-  assert.ok(log.gemini[0].system.includes("gold ٦٥٠"));
 });
 await t("edited product weight is reflected immediately (no cache of products)", async () => {
   ROWS[0].gms = 6;
@@ -144,18 +130,11 @@ await t("follow-up uses context_ids to find 'the second one'", async () => {
   await call({ message: "والتاني بكام؟", context_ids: [UUID(3)], history: [{ role: "assistant", text: "عندنا سلسلة" }] });
   assert.ok(log.gemini[0].system.includes("سلسلة كابل"));
 });
-await t("database prices missing → price NOT CONFIRMED, never guessed", async () => {
-  const bad = async (u, i) => (String(u).includes("er-api") || String(u).includes("gold-api") || String(u).includes("gold_prices") ? J({}, 500) : mockFetch(u, i));
+await t("gold.json missing → price NOT CONFIRMED, never guessed", async () => {
+  const bad = async (u, i) => (String(u).includes("gold.json") || String(u).includes("er-api") || String(u).includes("gold-api") || String(u).includes("gold_prices") ? J({}, 500) : mockFetch(u, i));
   // fresh module state is not possible; use a clock far in the future to expire the 2-min cache
   const r = await handleChat(post({ message: "خاتم ذهب عيار 21" }, { "x-forwarded-for": "7.7.7.7" }), env(), { fetch: bad, now: () => (clock += 10 * 60_000) });
   const j = await r.json(); assert.equal(j.products[0].price, null); assert.ok(log.gemini.at(-1).system.includes("NOT CONFIRMED") || log.gemini.at(-1).system.includes("unavailable"));
-});
-
-await t("FAQ knowledge (mini RAG) is injected only when a keyword matches", async () => {
-  await call({ message: "ازاي اطلب من الموقع؟" });
-  await call({ message: "مساء الخير" });
-  assert.ok(log.gemini[0].system.includes("KNOWLEDGE notes (shop-approved") && log.gemini[0].system.includes("add pieces to the cart"));
-  assert.ok(!log.gemini[1].system.includes("KNOWLEDGE notes (shop-approved"));
 });
 
 console.log("Answer & cards");

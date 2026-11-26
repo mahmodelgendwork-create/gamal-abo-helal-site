@@ -14,46 +14,31 @@
       story: {
         cue: "استمر بالتمرير",
         act1: {
-          eyebrow: "من ١٩٩٥",
+          eyebrow: "منذ ١٩٩٥",
           title: "جمال أبو هلال",
-          body: "من ١٩٩٥ بنحوّل الدهب لفرحة. من قلب المحلة لكل بيت في مصر."
+          body: "سلسلة محلات وورش ذهب وفضة، متوارثة في العائلة من سنة ١٩٩٥. مقرّنا في المحلة الكبرى، ونخدم السوق المصري كله."
         },
         act2: {
           eyebrow: "ذهب وفضة",
-          title: "السعر ع المكشوف",
-          body: "سعر الجرام لحظة بلحظة، والمصنعية واضحة. تدفع بس اللي تشوفه."
+          title: "السعر حسب سعر الجرام اليوم",
+          body: "ذهب عيار ٢١ و١٨ و٢٤، وفضة ٩٢٥. سعر كل قطعة يُحسب من وزنها وسعر الجرام الحالي مع المصنعية."
         },
         act3: {
           eyebrow: "اطلب أونلاين",
-          title: "اختار. اطلب. خلاص.",
-          body: "ضيف قطعتك للسلة، وفريقنا يكلمك يأكد ويرتّب التوصيل."
+          title: "اختر القطعة وأرسل طلبك",
+          body: "أضف القطعة للسلة واكتب بياناتك، وسنتواصل معك لتأكيد الطلب والتوصيل."
         }
       },
       home: {
         productsEyebrow: "مختارات",
         productsTitle: "من تشكيلتنا",
-        productsBody: "لمحة من التشكيلة. الباقي في صفحة المنتجات.",
-        viewAll: "عرض كل المنتجات",
-        rateTitle: "سعر الجرام النهاردة",
-        rateGold: "ذهب عيار",
-        rateSilver: "فضة",
-        rateNote: "بيتحدّث تلقائي كل ٣٠ دقيقة",
-        whyEyebrow: "ليه إحنا",
-        whyTitle: "ذهب تثق فيه. سعر تفهمه.",
-        why1t: "عيلة في الدهب من ١٩٩٥",
-        why1d: "محلات وورش في المحلة الكبرى، وسمعتنا هي أغلى حاجة عندنا.",
-        why2t: "سعر مفهوم",
-        why2d: "الوزن × سعر الجرام النهاردة + مصنعية واضحة. من غير مفاجآت.",
-        why3t: "طلبك في دقيقة",
-        why3d: "اختار من الموقع، وكمّل معانا على واتساب أو بالتليفون.",
-        ctaTitle: "عندك سؤال؟ إحنا قريبين.",
-        ctaBody: "كلّمنا واتساب أو اتصال، ونساعدك تختار القطعة المناسبة.",
-        ctaCall: "اتصل بينا"
+        productsBody: "بعض القطع المتاحة حاليًا. باقي التشكيلة في صفحة المنتجات.",
+        viewAll: "عرض كل المنتجات"
       },
       products: {
         eyebrow: "التشكيلة",
         title: "كل المنتجات",
-        body: "اختار اللي يعجبك وضيفه للسلة.",
+        body: "مجوهرات ذهب وفضة. أضف ما يعجبك إلى السلة مباشرة.",
         filters: { all: "الكل", gold: "ذهب", silver: "فضة", necklace: "سلاسل", bracelet: "أساور", box: "أطقم هدايا" },
         addToCart: "أضف للسلة",
         added: "أُضيفت ✓"
@@ -88,12 +73,12 @@
         whatsappSub: "أسرع وسيلة للرد",
         phone: "اتصال مباشر",
         email: "البريد الإلكتروني",
-                facebook: "فيسبوك",
-        facebookSub: "صفحتنا الرسمية",
+        instagram: "إنستغرام",
+        facebook: "فيسبوك",
         address: "الموقع"
       },
       footer: {
-        about: "جمال أبو هلال — محلات وورش ذهب وفضة في المحلة الكبرى، من ١٩٩٥.",
+        about: "جمال أبو هلال — سلسلة محلات وورش ذهب وفضة، متوارثة في العائلة من سنة ١٩٩٥ في المحلة الكبرى.",
         explore: "تصفّح",
         support: "الدعم",
         rights: "جميع الحقوق محفوظة"
@@ -109,44 +94,29 @@
         act1: {
           eyebrow: "Since 1995",
           title: "Gamal Abo Hel'al",
-          body: "Since 1995 we've turned gold into joy. From the heart of El-Mahalla to homes across Egypt."
+          body: "A family chain of gold and silver shops and workshops since 1995. Based in El-Mahalla El-Kubra, serving the whole Egyptian market."
         },
         act2: {
           eyebrow: "Gold & silver",
-          title: "Gold, priced in the open",
-          body: "Live gram price, clear making charge. You pay exactly what you see."
+          title: "Priced by today's gram rate",
+          body: "21k, 18k and 24k gold, and 925 silver. Each piece is priced from its weight, the current gram price and the making charge."
         },
         act3: {
           eyebrow: "Order online",
-          title: "Choose. Order. Done.",
-          body: "Add your piece to the cart. Our team calls to confirm and arrange delivery."
+          title: "Pick a piece, send your order",
+          body: "Add it to your cart and enter your details. We'll contact you to confirm the order and delivery."
         }
       },
       home: {
         productsEyebrow: "Selected",
         productsTitle: "From our collection",
-        productsBody: "A glimpse of the collection. The rest is on the products page.",
-        viewAll: "View all products",
-        rateTitle: "Today's gram price",
-        rateGold: "Gold",
-        rateSilver: "Silver",
-        rateNote: "Auto-updated every 30 minutes",
-        whyEyebrow: "Why us",
-        whyTitle: "Gold you trust. A price you understand.",
-        why1t: "A gold family since 1995",
-        why1d: "Shops and workshops in El-Mahalla El-Kubra. Our name is our most valuable asset.",
-        why2t: "Honest pricing",
-        why2d: "Weight × today's gram price + a clear making charge. No surprises.",
-        why3t: "Order in a minute",
-        why3d: "Pick on the site, then finish with us on WhatsApp or by phone.",
-        ctaTitle: "Got a question? We're close.",
-        ctaBody: "Message us on WhatsApp or call, and we'll help you choose the right piece.",
-        ctaCall: "Call us"
+        productsBody: "A few pieces available now. The rest is on the products page.",
+        viewAll: "View all products"
       },
       products: {
         eyebrow: "Collection",
         title: "All products",
-        body: "Pick what you love and add it to your cart.",
+        body: "Gold and silver jewelry. Add anything you like straight to your cart.",
         filters: { all: "All", gold: "Gold", silver: "Silver", necklace: "Necklaces", bracelet: "Bracelets", box: "Gift sets" },
         addToCart: "Add to cart",
         added: "Added ✓"
@@ -181,8 +151,8 @@
         whatsappSub: "Fastest way to reach us",
         phone: "Call us",
         email: "Email",
-                facebook: "Facebook",
-        facebookSub: "Our official page",
+        instagram: "Instagram",
+        facebook: "Facebook",
         address: "Location"
       },
       footer: {

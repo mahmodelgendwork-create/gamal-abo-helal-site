@@ -44,32 +44,26 @@
     const panels = Array.from(story.querySelectorAll(".story-panel"));
     const progressEls = Array.from(story.querySelectorAll(".story-progress span"));
 
+    let loadedCount = 0;
     let ready = false;
     let currentFrame = -1;
     let pendingFrame = 0;
 
-    // Progressive loading: sheet 1 (the first 24 frames) shows the hero straight away; the other
-    // three load one after another in the background. Until a sheet arrives we show the closest
-    // frame we already have, so the page never waits on all four files.
-    const sheets = SHEET_URLS.map(() => null);
-    function loadSheet(i) {
-      if (i >= SHEET_URLS.length) return;
+    const sheets = SHEET_URLS.map((url) => {
       const img = new Image();
-      img.decoding = "async";
-      img.onload = () => {
-        sheets[i] = img;
-        if (i === 0) { ready = true; resizeCanvas(); }
-        else if (ready && sheetOf(currentFrame) === i) drawFrame(currentFrame, true);
-        else if (ready) drawFrame(currentFrame < 0 ? 0 : currentFrame, true);
-        const next = () => loadSheet(i + 1);
-        if (i === 0 && document.readyState !== "complete") window.addEventListener("load", next, { once: true });
-        else next();
-      };
-      img.onerror = () => loadSheet(i + 1);
-      img.src = SHEET_URLS[i];
+      img.onload = onSheetLoaded;
+      img.src = url;
+      return img;
+    });
+
+    function onSheetLoaded() {
+      loadedCount++;
+      if (loadedCount === sheets.length) {
+        ready = true;
+        resizeCanvas();
+        drawFrame(pendingFrame, true);
+      }
     }
-    const sheetOf = (f) => Math.min(SHEET_URLS.length - 1, Math.floor(Math.max(0, f) / FRAMES_PER_SHEET));
-    loadSheet(0);
 
     function resizeCanvas() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -92,9 +86,8 @@
       if (frameIndex === currentFrame && !force) return;
       currentFrame = frameIndex;
 
-      let sheetIndex = sheetOf(frameIndex);
-      let local = frameIndex - sheetIndex * FRAMES_PER_SHEET;
-      while (sheetIndex > 0 && !sheets[sheetIndex]) { sheetIndex--; local = FRAMES_PER_SHEET - 1; }   // not downloaded yet → last frame we do have
+      const sheetIndex = Math.min(sheets.length - 1, Math.floor(frameIndex / FRAMES_PER_SHEET));
+      const local = frameIndex - sheetIndex * FRAMES_PER_SHEET;
       const sx = (local % COLS) * FRAME_W;
       const sy = Math.floor(local / COLS) * FRAME_H + CROP_TOP;
       const sheet = sheets[sheetIndex];

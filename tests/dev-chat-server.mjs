@@ -1,5 +1,5 @@
 // Local test harness: runs the REAL backend code (supabase/functions/chat/core.ts) on http://localhost:8787
-// with fake Supabase + fake Gemini upstreams (this sandbox has no internet). Prices are fixed test values.
+// with fake Supabase + fake Gemini upstreams (this sandbox has no internet). Prices use the site's real data/gold.json.
 // Run:  node --experimental-strip-types tests/dev-chat-server.mjs
 import http from "node:http";
 import { handleChat } from "../supabase/functions/chat/core.ts";
@@ -30,8 +30,7 @@ async function upstream(input, init = {}) {
     return J(rows);
   }
   if (url.includes("/rpc/chat_rate_hit")) return J(true);
-  if (url.startsWith("https://sb.test/rest/v1/gold_prices")) return J(Object.entries({ 24: 7000, 21: 6000, 18: 5000, 999: 100, 925: 90, 800: 80 }).map(([k, v]) => ({ karat: +k, price_per_gram: v, updated_at: new Date().toISOString() })));
-  if (url.startsWith("https://sb.test/rest/v1/site_settings")) return J([{ workmanship_gold: 500, workmanship_silver: 500 }]);
+  if (url.startsWith("http://localhost:8000/")) return real(url);                         // the website's real data/gold.json
   if (url.includes("generativelanguage.googleapis.com")) {                                  // fake Gemini: answers from the retrieved data
     const sys = JSON.parse(init.body).systemInstruction.parts[0].text;
     const lines = sys.split("\n").filter((l) => /^\[P\d+\]/.test(l));
@@ -42,7 +41,7 @@ async function upstream(input, init = {}) {
   }
   return J({}, 404);
 }
-const E = { GEMINI_API_KEY: "fake", SUPABASE_URL: "https://sb.test", SB_PUBLISHABLE_KEY: "pk", SB_SECRET_KEY: "sk" };
+const E = { GEMINI_API_KEY: "fake", SUPABASE_URL: "https://sb.test", SB_PUBLISHABLE_KEY: "pk", SB_SECRET_KEY: "sk", SITE_BASE_URL: "http://localhost:8000" };
 const env = { get: (k) => E[k] };
 
 http.createServer(async (req, res) => {

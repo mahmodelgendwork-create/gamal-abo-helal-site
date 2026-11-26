@@ -2,9 +2,9 @@
  * PRODUCT CATALOG (from the Supabase database)
  * ---------------------------------------------
  * Products + categories come from Supabase (add/edit them on the private admin page).
- * Price is computed here:  price = (gms x price per gram) + (gms x making charge; editable in the admin page)
+ * Price is computed here:  price = (gms x price per gram) + (gms x 500 EGP making charge)
  * Works for gold (18/21/24k) and silver (800/925/999). Silver gram price is automatic, like gold.
- * Prices: the gold_prices table (refreshed every 30 min by a GitHub Action), with a live fallback.
+ * Prices: fetched LIVE from the market every 5 minutes (gold-api.com x open.er-api.com); data/gold.json is only the fallback.
  *
  * Photos: each product has a list of photos (Google Drive links, "Anyone with the link").
  *   - Cards load ONLY the first photo, small (~480px).
@@ -34,16 +34,7 @@
     if (!list.length && row.image_url) list = [row.image_url.trim()];
     return list.length ? list.map(photo) : [{ thumb: FALLBACK, small: FALLBACK, full: FALLBACK }];
   }
-  function imgFallback(img) {
-    if (img.getAttribute("data-fb-done")) return;          // only once, so a missing logo can never loop
-    img.setAttribute("data-fb-done", "1");
-    img.src = FALLBACK;
-  }
-  // CSP-friendly image hooks (no inline onerror/onload): any <img data-fb> gets the fallback + fade-in.
-  document.addEventListener("error", (e) => { const t = e.target; if (t && t.tagName === "IMG" && t.hasAttribute("data-fb")) imgFallback(t); }, true);
-  document.addEventListener("load", (e) => { const t = e.target; if (t && t.tagName === "IMG" && t.hasAttribute("data-fb")) t.classList.add("is-in"); }, true);
-
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function imgFallback(img) { img.onerror = null; img.src = FALLBACK; }
 
   function api(path) {
     const c = window.SITE_CONFIG || {};
@@ -55,55 +46,90 @@
     });
   }
 
-  /* Metal prices per gram + the making charge, all from the database (the GitHub Action refreshes the
-     prices every 30 min; the admin page edits the making charge). If the database prices are missing or
-     older than 6h we fall back to live market data, exactly as before.
-     Returns { gold:{24,21,18}, silver:{999,925,800}, make:{gold,silver} } in EGP. */
+  /* metal prices per gram, in EGP: { gold: {24,21,18}, silver: {999,925,800}, meta: {...} }
+     Order of trust:
+       1) LIVE  - gold-api.com (XAU/XAG spot, USD/oz) x open.er-api.com (USD->EGP), fetched in the visitor's browser
+       2) SNAPSHOT - data/gold.json (written by the GitHub Action) if the live request fails
+       3) the last good prices already in memory
+     A manual override in config (goldPriceOverride / silverPriceOverride) always wins. */
   const GOLD_K = [24, 21, 18], SILVER_K = [999, 925, 800];
+  const OZ = 31.1035, REFRESH_MS = 5 * 60 * 1000;
+  const r2 = (n) => Math.round(n * 100) / 100;
+  let lastGood = null, lastEgp = 0;
+
+  async function getJSON(url, ms) {
+    const ctl = typeof AbortController === "function" ? new AbortController() : null;
+    const t = ctl ? setTimeout(() => ctl.abort(), ms || 8000) : null;
+    try {
+      const r = await fetch(url, ctl ? { signal: ctl.signal, cache: "no-store" } : { cache: "no-store" });
+      if (!r.ok) throw new Error(url + " -> " + r.status);
+      return await r.json();
+    } finally { if (t) clearTimeout(t); }
+  }
+
+  async function liveFromMarket() {
+    const [g, s, fx] = await Promise.all([
+      getJSON("https://api.gold-api.com/price/XAU"),
+      getJSON("https://api.gold-api.com/price/XAG"),
+      getJSON("https://open.er-api.com/v6/latest/USD").catch(() => null)
+    ]);
+    const egp = Number(fx && fx.rates && fx.rates.EGP) || lastEgp;
+    const usdG = Number(g.price), usdS = Number(s.price);
+    if (!(usdG > 0) || !(usdS > 0) || !(egp > 0)) throw new Error("bad live data");
+    lastEgp = egp;
+    const g24 = (usdG / OZ) * egp, s999 = (usdS / OZ) * egp;
+    const gold = {}, silver = {};
+    GOLD_K.forEach((k) => (gold[k] = r2(g24 * (k / 24))));
+    SILVER_K.forEach((k) => (silver[k] = r2(s999 * (k / 999))));
+    return { gold, silver, meta: { live: true, updated: new Date().toISOString(), source: "gold-api.com x open.er-api.com" } };
+  }
+
+  async function fromSnapshot() {
+    const j = await getJSON("data/gold.json?v=" + Math.floor(Date.now() / REFRESH_MS));
+    const gold = Object.assign({}, j.prices), silver = Object.assign({}, j.silver);
+    if (!(gold[21] > 0)) throw new Error("empty snapshot");
+    return { gold, silver, meta: { live: false, updated: j.updated, source: j.source || "data/gold.json" } };
+  }
+
   async function getPrices() {
     const c = window.SITE_CONFIG || {};
-    const gold = {}, silver = {};
-    const make = Object.assign({ gold: 500, silver: 500 }, c.workmanshipPerGram || {});   // used only if the database has none
-    let stale = true;
-    try {
-      const [rows, st] = await Promise.all([
-        api("gold_prices?select=karat,price_per_gram,updated_at"),
-        api("site_settings?select=workmanship_gold,workmanship_silver&id=eq.1").catch(() => [])
-      ]);
-      let newest = 0;
-      rows.forEach((r) => {
-        const k = Number(r.karat), v = Number(r.price_per_gram);
-        if (v > 0) { (GOLD_K.includes(k) ? gold : silver)[k] = v; newest = Math.max(newest, new Date(r.updated_at).getTime()); }
-      });
-      stale = !newest || Date.now() - newest > 6 * 3600e3;
-      if (st[0]) { make.gold = Number(st[0].workmanship_gold); make.silver = Number(st[0].workmanship_silver); }
-    } catch (e) {}
-    if (stale || !(gold[21] > 0) || !(silver[925] > 0)) {
-      try {
-        const fx = await (await fetch("https://open.er-api.com/v6/latest/USD")).json();
-        const egp = fx.rates.EGP;
-        const g = await (await fetch("https://api.gold-api.com/price/XAU")).json();
-        const g24 = (g.price / 31.1035) * egp;
-        if (g24 > 0) GOLD_K.forEach((k) => (gold[k] = Math.round(g24 * (k / 24) * 100) / 100));
-        const s = await (await fetch("https://api.gold-api.com/price/XAG")).json();
-        const s999 = (s.price / 31.1035) * egp;
-        if (s999 > 0) SILVER_K.forEach((k) => (silver[k] = Math.round(s999 * (k / 999) * 100) / 100));
-      } catch (e) { /* keep whatever the database had */ }
-    }
+    let p = null;
+    try { p = await liveFromMarket(); } catch (e) { console.warn("Live gold price failed, using fallback:", e.message); }
+    if (!p) { try { p = await fromSnapshot(); } catch (e) { console.warn("gold.json failed:", e.message); } }
+    if (p) lastGood = p;
+    else p = lastGood || { gold: {}, silver: {}, meta: { live: false, updated: null, source: "none" } };
+    p = { gold: Object.assign({}, p.gold), silver: Object.assign({}, p.silver), meta: p.meta };
     const og = c.goldPriceOverride || {}, os = c.silverPriceOverride || {};
-    GOLD_K.forEach((k) => { if (og[k] > 0) gold[k] = og[k]; });
-    SILVER_K.forEach((k) => { if (os[k] > 0) silver[k] = os[k]; });
-    return { gold, silver, make };
+    GOLD_K.forEach((k) => { if (og[k] > 0) p.gold[k] = og[k]; });
+    SILVER_K.forEach((k) => { if (os[k] > 0) p.silver[k] = os[k]; });
+    return p;
   }
   const getGold = async () => (await getPrices()).gold;   // kept for older callers
 
   /* the one place the price formula lives: (grams x gram price) + (grams x making charge) */
   function priceOf(metal, purity, gms, prices) {
-    const m = metal === "silver" ? "silver" : "gold";
-    const perGram = ((m === "silver" ? prices.silver : prices.gold) || {})[purity];
-    const make = Number((prices.make || {})[m]);
+    const c = window.SITE_CONFIG || {};
+    const perGram = ((metal === "silver" ? prices.silver : prices.gold) || {})[purity];
+    const make = Number((c.workmanshipPerGram || {})[metal === "silver" ? "silver" : "gold"]);
     const rate = make >= 0 ? make : 500;
     return perGram > 0 && gms > 0 ? Math.round(gms * perGram + gms * rate) : null;
+  }
+
+  let RAW_ROWS = [];
+  function build(rows, prices) {
+    return rows
+      .map((r) => {
+        const metal = r.metal === "silver" ? "silver" : "gold";
+        const karat = Number(r.karat), gms = Number(r.gms);
+        const photos = photosOf(r);
+        return {
+          id: r.id, category: r.category, metal, karat, gms, photos, image: photos[0].small, localDefault: false,
+          price: priceOf(metal, karat, gms, prices),
+          name: { ar: r.name_ar, en: r.name_en || r.name_ar },
+          desc: { ar: r.desc_ar || "", en: r.desc_en || r.desc_ar || "" }
+        };
+      })
+      .filter((p) => p.price != null);
   }
 
   async function load() {
@@ -115,23 +141,33 @@
         api("products_priced?select=*&order=created_at.desc"),
         getPrices()
       ]);
-      window.CATALOG.prices = prices;
       window.CATEGORIES = cats.map((k) => ({ slug: k.slug, name: { ar: k.name_ar, en: k.name_en || k.name_ar } }));
-      window.PRODUCTS = rows
-        .map((r) => {
-          const metal = r.metal === "silver" ? "silver" : "gold";
-          const karat = Number(r.karat), gms = Number(r.gms);
-          const photos = photosOf(r);
-          return {
-            id: r.id, category: r.category, metal, karat, gms, photos, image: photos[0].small, localDefault: false,
-            price: priceOf(metal, karat, gms, prices),
-            name: { ar: r.name_ar, en: r.name_en || r.name_ar },
-            desc: { ar: r.desc_ar || "", en: r.desc_en || r.desc_ar || "" }
-          };
-        })
-        .filter((p) => p.price != null);
+      RAW_ROWS = rows;
+      window.PRICES = prices;
+      window.PRODUCTS = build(rows, prices);
     } catch (e) { console.error("Could not load catalog:", e); }
   }
 
-  window.CATALOG = { esc, imgFallback, driveId, photo, getGold, getPrices, priceOf, ready: load().then(() => document.dispatchEvent(new Event("catalogready"))) };
+  /* re-price every product from fresh market data, every 5 minutes (and when the tab becomes visible again) */
+  let refreshing = false, lastRefresh = Date.now();
+  async function refreshPrices() {
+    if (refreshing || !RAW_ROWS.length) return;
+    refreshing = true;
+    try {
+      const prices = await getPrices();
+      if (prices.meta && prices.meta.updated) {
+        window.PRICES = prices;
+        window.PRODUCTS = build(RAW_ROWS, prices);
+        lastRefresh = Date.now();
+        document.dispatchEvent(new Event("pricesupdated"));
+      }
+    } catch (e) { console.warn("Price refresh failed:", e); }
+    refreshing = false;
+  }
+  setInterval(refreshPrices, REFRESH_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && Date.now() - lastRefresh > REFRESH_MS) refreshPrices();
+  });
+
+  window.CATALOG = { imgFallback, driveId, photo, getGold, getPrices, priceOf, refreshPrices, ready: load().then(() => document.dispatchEvent(new Event("catalogready"))) };
 })();
