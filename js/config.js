@@ -14,6 +14,8 @@ window.SITE_CONFIG = {
   // Optional: type a gold price per gram (EGP) to override the automatic one, e.g. { 21: 6300 }.
   // Leave as {} to use the automatic price.
   goldPriceOverride: {},
+  goldPriceAdjustPercent: 0,
+  silverPriceAdjustPercent: 0,
   // Same for silver, by purity: e.g. { 925: 95 }. Leave as {} for the automatic price.
   silverPriceOverride: {},
 
