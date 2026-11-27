@@ -91,14 +91,33 @@
     return { gold, silver, meta: { live: false, updated: j.updated, source: j.source || "data/gold.json" } };
   }
 
+  /* OPTIONAL: your own local-market price feed (e.g. a Supabase function or a URL the Gold Bullion people give you).
+     Set  localPriceUrl  in js/config.js. It must return JSON like:
+     { "updated": "2026-11-27T10:00:00Z", "prices": {"24": 6285, "21": 5499, "18": 4714}, "silver": {"999": 95, "925": 88, "800": 76} } */
+  async function fromLocalFeed(url) {
+    const j = await getJSON(url);
+    const gold = Object.assign({}, j.prices), silver = Object.assign({}, j.silver);
+    if (!(gold[21] > 0)) throw new Error("bad local feed");
+    return { gold, silver, meta: { live: true, updated: j.updated || new Date().toISOString(), source: "local feed" } };
+  }
+
   async function getPrices() {
     const c = window.SITE_CONFIG || {};
-    let p = null;
-    try { p = await liveFromMarket(); } catch (e) { console.warn("Live gold price failed, using fallback:", e.message); }
+    let p = null, local = false;
+    if (c.localPriceUrl) { try { p = await fromLocalFeed(c.localPriceUrl); local = true; } catch (e) { console.warn("Local price feed failed:", e.message); } }
+    if (!p) { try { p = await liveFromMarket(); } catch (e) { console.warn("Live gold price failed, using fallback:", e.message); } }
     if (!p) { try { p = await fromSnapshot(); } catch (e) { console.warn("gold.json failed:", e.message); } }
     if (p) lastGood = p;
     else p = lastGood || { gold: {}, silver: {}, meta: { live: false, updated: null, source: "none" } };
     p = { gold: Object.assign({}, p.gold), silver: Object.assign({}, p.silver), meta: p.meta };
+    // Local-market calibration: spot x official rate is the international price; Egyptian shops quote a bit different.
+    // goldPriceAdjustPercent: 1.5 => +1.5% on every gold karat (use a negative number to lower). Same for silver.
+    // Not applied to a local feed (it is already the local price) or to manual overrides.
+    if (!local) {
+      const ag = 1 + (Number(c.goldPriceAdjustPercent) || 0) / 100, as = 1 + (Number(c.silverPriceAdjustPercent) || 0) / 100;
+      GOLD_K.forEach((k) => { if (p.gold[k] > 0) p.gold[k] = r2(p.gold[k] * ag); });
+      SILVER_K.forEach((k) => { if (p.silver[k] > 0) p.silver[k] = r2(p.silver[k] * as); });
+    }
     const og = c.goldPriceOverride || {}, os = c.silverPriceOverride || {};
     GOLD_K.forEach((k) => { if (og[k] > 0) p.gold[k] = og[k]; });
     SILVER_K.forEach((k) => { if (os[k] > 0) p.silver[k] = os[k]; });
